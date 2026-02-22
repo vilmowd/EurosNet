@@ -49,13 +49,17 @@
                     <center><strong>RECENT ACTIVITY</strong></center>
                     <hr size="1">
                     <ul style="font-size: 9pt; padding-left: 15px; margin: 5px 0;">
-                        <% recentNodes.forEach(recent => { %>
-                            <li style="margin-bottom: 8px;">
-                                <a href="<%= recent.isStatic ? '/sites/'+recent.id+'.html' : '/node/'+recent.id %>">
-                                    <%= recent.title %>
-                                </a>
-                            </li>
-                        <% }) %>
+                        <% if (recentNodes && recentNodes.length > 0) { %>
+                            <% recentNodes.forEach(recent => { %>
+                                <li style="margin-bottom: 8px;">
+                                    <a href="<%= recent.isStatic ? '/sites/'+recent.id+'.html' : '/node/'+recent.id %>">
+                                        <%= recent.title %>
+                                    </a>
+                                </li>
+                            <% }) %>
+                        <% } else { %>
+                            <li style="list-style: none; margin-left: -15px; color: #666;">No recent activity.</li>
+                        <% } %>
                     </ul>
                 </td>
 
@@ -63,7 +67,7 @@
                     <div class="main-content-container" style="min-height: 150px; background: #fff; padding: 15px; border: 1px inset #ffffff; color: #000; overflow: auto;">
                         <% if (node.isUnderConstruction) { %>
                             <center style="padding: 20px 0;">
-                                <img src="https://web.archive.org/web/20090830043139/http://geocities.com/SiliconValley/8197/undercon.gif" alt="Under Construction">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/d/d9/Under_construction_animated.gif" alt="Under Construction">
                                 <h2 style="color: #000; margin: 5px 0;">Pardon Our Dust!</h2>
                                 <p>The Architect is currently re-indexing this sector.</p>
                                 <a href="javascript:history.back()">[ RETURN ]</a>

@@ -150,21 +150,36 @@ app.get('/node/:id', (req, res) => {
         // 4. Maintenance Status
         const maintenanceStatus = typeof maintenanceMode !== 'undefined' ? maintenanceMode : false;
 
-        // 5. Sidebar: Get 5 most recent nodes
+        // 5. Sidebar: Get 5 most recent nodes (Filtered)
         const files = fs.readdirSync('./nodes');
-        // Inside your app.get('/node/:id') route:
         const recentNodes = files
-            .filter(file => file.endsWith('.json')) 
+            .filter(file => {
+                // ONLY include .json files, EXCLUDE the root, and ignore system files
+                return file.endsWith('.json') && 
+                    file !== 'root.json' && 
+                    file !== 'bulletin.json' && 
+                    file !== 'filters.json';
+            }) 
             .map(file => {
-                const data = JSON.parse(fs.readFileSync(`./nodes/${file}`, 'utf8'));
-                const stats = fs.statSync(`./nodes/${file}`);
-                return { 
-                    id: data.id, 
-                    title: data.title, 
-                    mtime: stats.mtime,
-                    isStatic: data.isStatic || false // Make sure this is captured!
-                };
+                try {
+                    const data = JSON.parse(fs.readFileSync(`./nodes/${file}`, 'utf8'));
+                    const stats = fs.statSync(`./nodes/${file}`);
+                    
+                    // Only return if it actually has a title/id
+                    if (data.title && data.id) {
+                        return { 
+                            id: data.id, 
+                            title: data.title, 
+                            mtime: stats.mtime,
+                            isStatic: data.isStatic || false 
+                        };
+                    }
+                    return null;
+                } catch (e) {
+                    return null; // Skip corrupted files
+                }
             })
+            .filter(node => node !== null) // Remove the nulls we created above
             .sort((a, b) => b.mtime - a.mtime)
             .slice(0, 5);
 
@@ -311,30 +326,76 @@ app.post('/spawn/:parentId', spawnLimiter, (req, res) => {
 });
 
 app.post('/bulletin/post', (req, res) => {
-    if (maintenanceMode) return res.status(503).send("SYSTEM LOCKDOWN");
+    // 1. Check for Lockdown
+    if (typeof maintenanceMode !== 'undefined' && maintenanceMode) {
+        return res.status(503).send("SYSTEM LOCKDOWN: The board is temporarily closed for maintenance.");
+    }
 
     const { username, message } = req.body;
-    const boardPath = './bulletin.json';
-    
+    const boardPath = './nodes/bulletin.json';
+    const filterPath = './nodes/filters.json';
+
+    // 2. Load the Banned Words list
+    let bannedWords = [];
+    try {
+        if (fs.existsSync(filterPath)) {
+            const filterData = JSON.parse(fs.readFileSync(filterPath, 'utf8'));
+            bannedWords = filterData.bannedWords || [];
+        }
+    } catch (e) {
+        console.error("::: FILTER READ ERROR :::", e);
+        // If file fails, we proceed with an empty list rather than crashing
+    }
+
+    // 3. Perform the Security Scan
+    // We check the username AND message for any banned phrases
+    const contentToCheck = `${username} ${message}`.toLowerCase();
+    const foundBadWord = bannedWords.find(word => 
+        word.trim() !== "" && contentToCheck.includes(word.toLowerCase().trim())
+    );
+
+    if (foundBadWord) {
+        return res.status(400).send(`
+            <script>
+                alert("ACCESS DENIED: Your post contains the forbidden term '${foundBadWord}'. Please keep the network clean.");
+                window.location.href = "/node/root";
+            </script>
+        `);
+    }
+
+    // 4. Sanitize and Prep the Data
+    // We escape < and > to prevent people from putting 
+    // nasty scripts or broken HTML into your board.
+    const safeUsername = (username || "Anon").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const safeMessage = (message || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    if (!safeMessage.trim()) {
+        return res.redirect('/node/root'); // Don't post empty messages
+    }
+
+    // 5. Read, Update, and Save the Board
     let posts = [];
     try {
         if (fs.existsSync(boardPath)) {
             posts = JSON.parse(fs.readFileSync(boardPath, 'utf8'));
         }
-    } catch (e) { posts = []; }
+    } catch (e) {
+        posts = [];
+    }
 
-    const safeMessage = message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    
+    // Add new post to the top
     posts.unshift({ 
-        username: username || "Anon", 
+        username: safeUsername, 
         message: safeMessage, 
         date: new Date().toLocaleString() 
     });
 
+    // Keep only the most recent 15 posts to save disk space
     fs.writeFileSync(boardPath, JSON.stringify(posts.slice(0, 15), null, 2));
 
-    // CHANGE THIS LINE:
-    // Instead of res.redirect('back'), we use a hard path to your root.
+    console.log(`::: NEW BULLETIN FROM ${safeUsername} :::`);
+    
+    // Redirect back to the homepage/root
     res.redirect('/node/root'); 
 });
 
@@ -413,61 +474,90 @@ const isAdmin = (req, res, next) => {
 
 
 app.get('/admin-portal', isAdmin, (req, res) => {
-    // Retrieve the admin password from the session rather than the URL
-    // This allows your existing EJS forms/buttons to keep working.
+    // Retrieve the admin password from the session
     const key = req.session.adminPassword; 
 
-    // 1. Gather Node Data
-    // We read the directory for live nodes and the cemetery for deleted ones
-    const nodeFiles = fs.readdirSync('./nodes').filter(f => f.endsWith('.json'));
-    const deadFiles = fs.existsSync('./cemetery') 
-        ? fs.readdirSync('./cemetery').filter(f => f.endsWith('.json')) 
-        : [];
+    try {
+        // 1. GATHER NODE DATA
+        // Ensure the directories exist before reading to prevent crashes
+        if (!fs.existsSync('./nodes')) fs.mkdirSync('./nodes');
+        if (!fs.existsSync('./cemetery')) fs.mkdirSync('./cemetery');
 
-    // 2. Calculate "Weight" (File Size) Utility
-    const getDirSize = (dir, files) => {
-        return files.reduce((acc, file) => {
+        const nodeFiles = fs.readdirSync('./nodes').filter(f => f.endsWith('.json'));
+        const deadFiles = fs.readdirSync('./cemetery').filter(f => f.endsWith('.json'));
+
+        // 2. GATHER BULLETIN DATA (The missing piece!)
+        let bulletinData = [];
+        const bulletinPath = './nodes/bulletin.json'; // RECOMMENDED: save inside nodes for Railway persistence
+        
+        // Fallback check: if not in nodes/, check root (transition period)
+        const oldPath = './bulletin.json';
+        const finalPath = fs.existsSync(bulletinPath) ? bulletinPath : oldPath;
+
+        if (fs.existsSync(finalPath)) {
             try {
-                const stats = fs.statSync(path.join(dir, file));
-                return acc + stats.size;
-            } catch (e) {
-                return acc; // Skip if file was moved/deleted mid-scan
+                bulletinData = JSON.parse(fs.readFileSync(finalPath, 'utf8'));
+            } catch (err) {
+                console.error("Malformed bulletin.json file:", err);
+                bulletinData = [];
             }
-        }, 0);
-    };
+        }
 
-    const nodesWeightKB = (getDirSize('./nodes', nodeFiles) / 1024);
-    const cemeteryWeightKB = (getDirSize('./cemetery', deadFiles) / 1024);
-    const totalWeight = (nodesWeightKB + cemeteryWeightKB).toFixed(2);
+        // 3. CALCULATE SYSTEM WEIGHT
+        const getDirSize = (dir, files) => {
+            return files.reduce((acc, file) => {
+                try {
+                    const stats = fs.statSync(path.join(dir, file));
+                    return acc + stats.size;
+                } catch (e) {
+                    return acc; 
+                }
+            }, 0);
+        };
 
-    // Calculate ratio of dead nodes vs total system weight for the progress bar
-    const ratio = (totalWeight > 0) 
-        ? ((cemeteryWeightKB / totalWeight) * 100).toFixed(1) 
-        : 0;
+        const nodesWeightKB = (getDirSize('./nodes', nodeFiles) / 1024);
+        const cemeteryWeightKB = (getDirSize('./cemetery', deadFiles) / 1024);
+        const totalWeight = (nodesWeightKB + cemeteryWeightKB).toFixed(2);
 
-    // 3. Render the Dashboard
-    res.render('admin-dash', {
-        // Map files to their actual JSON content for the list registry
-        allNodes: nodeFiles.map(f => JSON.parse(fs.readFileSync(`./nodes/${f}`))),
-        deadNodes: deadFiles.map(f => JSON.parse(fs.readFileSync(`./cemetery/${f}`))),
-        
-        // Grab the last 5 lines of the Garbage Collector log for the mini-console
-        gcLogs: fs.existsSync('./gc_history.log') 
-            ? fs.readFileSync('./gc_history.log', 'utf8').trim().split('\n').slice(-5).reverse() 
-            : [],
-        
-        // Stats object used by your retro resource monitor
-        stats: {
-            liveCount: nodeFiles.length,
-            deadCount: deadFiles.length,
-            totalWeight: totalWeight,
-            ratio: ratio
-        },
-        
-        // System variables
-        maintenanceMode: typeof maintenanceMode !== 'undefined' ? maintenanceMode : false,
-        key: key 
-    });
+        const ratio = (totalWeight > 0) 
+            ? ((cemeteryWeightKB / totalWeight) * 100).toFixed(1) 
+            : 0;
+
+        // 4. RENDER THE DASHBOARD
+        res.render('admin-dash', {
+            // Data lists
+            allNodes: nodeFiles.map(f => {
+                const data = JSON.parse(fs.readFileSync(`./nodes/${f}`, 'utf8'));
+                return { ...data, slug: f.replace('.json', '') };
+            }),
+            deadNodes: deadFiles.map(f => {
+                const data = JSON.parse(fs.readFileSync(`./cemetery/${f}`, 'utf8'));
+                return { ...data, slug: f.replace('.json', '') };
+            }),
+            bulletin: bulletinData, 
+            
+            // System Logs (Garbage Collector)
+            gcLogs: fs.existsSync('./gc_history.log') 
+                ? fs.readFileSync('./gc_history.log', 'utf8').trim().split('\n').slice(-5).reverse() 
+                : ["No logs found. System healthy."],
+            
+            // Statistics for Resource Monitor
+            stats: {
+                liveCount: nodeFiles.length,
+                deadCount: deadFiles.length,
+                totalWeight: totalWeight,
+                ratio: ratio
+            },
+            
+            // System variables
+            maintenanceMode: typeof maintenanceMode !== 'undefined' ? maintenanceMode : false,
+            key: key 
+        });
+
+    } catch (error) {
+        console.error("CRITICAL ADMIN PORTAL ERROR:", error);
+        res.status(500).send("Admin Portal failed to load. Check server logs.");
+    }
 });
 
 
