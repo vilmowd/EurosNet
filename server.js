@@ -560,6 +560,50 @@ app.get('/admin-portal', isAdmin, (req, res) => {
     }
 });
 
+app.get('/admin/audit-network', isAdmin, (req, res) => {
+    const filterPath = './nodes/filters.json';
+    const nodesDir = './nodes';
+
+    try {
+        // 1. Load Banned Words
+        let bannedWords = [];
+        if (fs.existsSync(filterPath)) {
+            bannedWords = JSON.parse(fs.readFileSync(filterPath, 'utf8')).bannedWords || [];
+        }
+
+        // 2. Scan all JSON files in /nodes
+        const files = fs.readdirSync(nodesDir).filter(f => f.endsWith('.json') && f !== 'filters.json' && f !== 'bulletin.json');
+        
+        const flaggedSites = [];
+
+        files.forEach(file => {
+            const data = JSON.parse(fs.readFileSync(path.join(nodesDir, file), 'utf8'));
+            const contentToScan = `${data.title} ${data.content}`.toLowerCase();
+            
+            // Check if any banned word exists in this specific site
+            const violations = bannedWords.filter(word => contentToScan.includes(word.toLowerCase().trim()));
+
+            if (violations.length > 0) {
+                flaggedSites.push({
+                    id: data.id,
+                    title: data.title,
+                    violations: violations
+                });
+            }
+        });
+
+        // 3. Render a special audit page (or send data back to dash)
+        res.render('admin-audit', { 
+            flaggedSites, 
+            key: req.session.adminPassword 
+        });
+
+    } catch (e) {
+        console.error("Audit failed:", e);
+        res.status(500).send("Audit Error");
+    }
+});
+
 
 app.post('/edit/:id', (req, res) => {
     const { title, content, adminPass } = req.body;

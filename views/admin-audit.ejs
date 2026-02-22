@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EUROS NET | Security Audit</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body style="background: #000; color: #0f0; font-family: monospace; padding: 20px;">
+    <h2>🚨 NETWORK SECURITY AUDIT 🚨</h2>
+    <hr>
+    <p>The following nodes contain terms found in your <strong>filters.json</strong>:</p>
+
+    <% if (flaggedSites.length === 0) { %>
+        <p style="color: #0ff;">[ SCAN COMPLETE: NO VIOLATIONS FOUND ]</p>
+    <% } else { %>
+        <table border="1" width="100%" style="border-collapse: collapse; background: #111;">
+            <tr>
+                <th>Site Title</th>
+                <th>Detected Terms</th>
+                <th>Actions</th>
+            </tr>
+            <% flaggedSites.forEach(site => { %>
+                <tr>
+                    <td><%= site.title %></td>
+                    <td style="color: #f00;"><%= site.violations.join(', ') %></td>
+                    <td>
+                        <a href="/node/<%= site.id %>" target="_blank">[VIEW]</a>
+                        <a href="/edit-node-page/<%= site.id %>" style="color: #ff0;">[EDIT]</a>
+                    </td>
+                </tr>
+            <% }) %>
+        </table>
+    <% } %>
+    <br>
+    <a href="/admin-portal" style="color: #fff;">[ RETURN TO MAIN DASHBOARD ]</a>
+</body>
+</html>
