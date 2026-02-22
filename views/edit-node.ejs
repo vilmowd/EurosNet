@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EDITOR.EXE - <%= node.title %></title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="window">
+        <div class="title-bar">
+            <span>Edit_Node.sys - [<%= node.id %>]</span>
+            <span>[X]</span>
+        </div>
+        <div class="content-area">
+            <form action="/edit/<%= node.id %>" method="POST">
+                <input type="hidden" name="adminPass" value="<%= key %>">
+                
+                <label>Node Title:</label><br>
+                <input type="text" name="title" value="<%= node.title %>" style="width: 100%;"><br><br>
+                
+                <label>HTML Content:</label><br>
+                <textarea name="content" rows="15" style="width: 100%; font-family: 'Courier New';"><%= node.content %></textarea><br><br>
+                
+                <button type="submit">OVERWRITE NODE</button>
+                <button type="button" onclick="window.history.back()">CANCEL</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

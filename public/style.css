@@ -1,0 +1,87 @@
+.main-content {
+    all: revert; /* Resets any leaked styles */
+    overflow: auto; /* Adds scrollbars if their content is too wide */
+    max-width: 100%;
+    word-wrap: break-word;
+    display: block;
+    clear: both; /* Prevents floating elements from breaking the sidebar */
+}
+body { 
+    background-color: #008080; 
+    font-family: "MS Sans Serif", Arial, sans-serif; 
+    font-size: 12pt;
+    margin: 20px;
+}
+
+.window {
+    background-color: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    width: 90%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2px;
+}
+
+.title-bar {
+    background: linear-gradient(90deg, #000080, #1084d0);
+    color: white;
+    padding: 3px 5px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+}
+
+.content-area {
+    background: white;
+    border: 2px inset #ffffff;
+    padding: 20px;
+    margin: 4px;
+    color: black;
+    min-height: 200px;
+}
+
+.hit-counter {
+    background: #000;
+    color: #ff0000;
+    font-family: 'Courier New', monospace;
+    padding: 5px;
+    border: 2px inset #fff;
+    display: inline-block;
+    margin-top: 10px;
+}
+
+input, textarea, button {
+    background-color: #ffffff;
+    border: 2px inset #d5d5d5;
+}
+
+button {
+    background-color: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    padding: 2px 10px;
+    font-weight: bold;
+}
+
+button:active {
+    border-color: #808080 #ffffff #ffffff #808080;
+}
+
+
+/* Add this to your existing CSS */
+.error-box {
+    background: #800000;
+    color: #ffffff;
+    border: 2px inset #ffffff;
+    padding: 10px;
+    margin-bottom: 15px;
+    font-size: 10pt;
+    text-align: center;
+    font-family: 'Courier New', monospace;
+}
+
+.content-area a:hover {
+    background-color: #000080;
+    color: #ffffff !important;
+}

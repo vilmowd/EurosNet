@@ -1,0 +1,29 @@
+{
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "dompurify": "^3.3.1",
+    "dotenv": "^17.3.1",
+    "ejs": "^4.0.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "express-session": "^1.19.0",
+    "helmet": "^8.1.0",
+    "jsdom": "^28.1.0",
+    "multer": "^2.0.2",
+    "sanitize-html": "^2.17.1",
+    "unzipper": "^0.12.3",
+    "uuid": "^13.0.0"
+  },
+  "name": "new-site",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

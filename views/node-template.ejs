@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <title>Euros-Explore And Create</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div class="window">
+    <div class="title-bar">
+        <span>[Euros] The Net Explorer</span>
+        <span>[?] [X]</span>
+    </div>
+
+    <div class="content-area">
+        <% if (locals.broadcast && broadcast.message) { %>
+            <div id="broadcast-zone" style="background: #000; color: #0f0; border: 2px solid #0f0; padding: 10px; margin-bottom: 20px;">
+                <marquee scrollamount="5">::: SYSTEM_BROADCAST: <%= broadcast.message %> :::</marquee>
+            </div>
+        <% } %>
+
+        <div style="background: #c0c0c0; border: 2px outset #ffffff; padding: 5px; margin-bottom: 10px; display: flex; gap: 8px; align-items: center;">
+            <a href="/node/root"><button type="button">🏠 Home</button></a>
+            <a href="/random" target="_blank">
+    <button type="button">🌀 Teleport</button>
+</a>
+            <a href="https://web.libera.chat/?channels=#retro" target="_blank" style="text-decoration: none;">
+                <button type="button" style="background: #000080; color: white; cursor: pointer;">💬 90s CHAT</button>
+            </a>
+            
+            <div style="flex-grow: 1; text-align: right; padding-right: 5px;">
+                <form action="/search" method="GET" style="display: inline;">
+                    <input type="text" name="q" placeholder="Seek..." size="12">
+                    <button type="submit">Go</button>
+                </form>
+            </div>
+        </div>
+
+        <center>
+            <h1 style="margin-top: 0;">🌐 The Node Net 🌐</h1>
+        </center>
+
+        <hr>
+
+        <table width="100%" border="0" cellspacing="0" cellpadding="10">
+            <tr valign="top">
+                <td width="180" style="border-right: 2px ridge #ffffff; background: #d5d5d5; padding: 10px;">
+                    <center><strong>RECENT ACTIVITY</strong></center>
+                    <hr size="1">
+                    <ul style="font-size: 9pt; padding-left: 15px; margin: 5px 0;">
+                        <% recentNodes.forEach(recent => { %>
+                            <li style="margin-bottom: 8px;">
+                                <a href="<%= recent.isStatic ? '/sites/'+recent.id+'.html' : '/node/'+recent.id %>">
+                                    <%= recent.title %>
+                                </a>
+                            </li>
+                        <% }) %>
+                    </ul>
+                </td>
+
+                <td>
+                    <div class="main-content-container" style="min-height: 150px; background: #fff; padding: 15px; border: 1px inset #ffffff; color: #000; overflow: auto;">
+                        <% if (node.isUnderConstruction) { %>
+                            <center style="padding: 20px 0;">
+                                <img src="https://web.archive.org/web/20090830043139/http://geocities.com/SiliconValley/8197/undercon.gif" alt="Under Construction">
+                                <h2 style="color: #000; margin: 5px 0;">Pardon Our Dust!</h2>
+                                <p>The Architect is currently re-indexing this sector.</p>
+                                <a href="javascript:history.back()">[ RETURN ]</a>
+                            </center>
+                        <% } else { %>
+                            <div style="all: revert; display: block; unicode-bidi: isolate;">
+                                <%- node.content %>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <br>
+
+                    <div style="background: #c0c0c0; border: 2px solid; border-color: #ffffff #808080 #808080 #ffffff; padding: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <img src="https://i.pinimg.com/originals/b3/37/9f/b3379f1f54c4b498dc151d445a1237ee.gif" width="40">
+                            <strong style="font-size: 14pt; letter-spacing: 2px; text-decoration: underline;">[ THE GRAFFITI WALL ]</strong>
+                            <img src="https://i.pinimg.com/originals/b3/37/9f/b3379f1f54c4b498dc151d445a1237ee.gif" width="40" style="transform: scaleX(-1);">
+                        </div>
+
+                        <div style="height: 500px; overflow-y: scroll; font-size: 10pt; border: 3px inset #ffffff; background: #fff; padding: 15px; margin-bottom: 15px; color: #000; font-family: 'Courier New', monospace; background-image: linear-gradient(#f9f9f9 1px, transparent 1px); background-size: 100% 1.5em;">
+                            <% if (bulletin && bulletin.length > 0) { %>
+                                <% bulletin.slice().reverse().forEach(post => { %>
+                                    <div style="margin-bottom: 15px; border-bottom: 1px dotted #999; padding-bottom: 8px;">
+                                        <span style="background: <%= post.username === 'SYSTEM_BOT' ? '#ff0000' : '#000080' %>; color: #fff; padding: 2px 5px; font-weight: bold;">
+                                            <%= post.username %>
+                                        </span>
+                                        <span style="font-size: 8pt; color: #666; margin-left: 10px;">
+                                            <%= post.date %>
+                                        </span>
+                                        <p style="margin: 8px 0 0 5px; line-height: 1.4; color: #111;">
+                                            <%= post.message %>
+                                        </p>
+                                    </div>
+                                <% }) %>
+                            <% } else { %>
+                                <center style="margin-top: 200px; color: #888;">
+                                    <p><i>The wall is cold and bare.</i></p>
+                                    <p><b>BE THE FIRST TO SCRAWL</b></p>
+                                </center>
+                            <% } %>
+                        </div>
+
+                       <form action="/bulletin/post" method="POST" style="background: #808080; padding: 12px; border: 2px inset #fff;">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="flex: 0 0 120px;">
+                                    <input type="text" name="username" placeholder="NAME" style="width: 100%; padding: 8px; border: 2px inset #eee;" required <%= maintenanceMode ? 'disabled' : '' %>>
+                                </div>
+                                <div style="flex: 1;">
+                                    <input type="text" name="message" placeholder="Type your graffiti here..." style="width: 100%; padding: 8px; border: 2px inset #eee;" required <%= maintenanceMode ? 'disabled' : '' %>>
+                                </div>
+                                <button type="submit" style="padding: 0 20px; font-weight: bold; background: #c0c0c0; border: 2px outset #fff; cursor: pointer;" <%= maintenanceMode ? 'disabled' : '' %>>
+                                    SCRAWL
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <hr>
+
+        <center>
+            <div class="hit-counter">
+                <%= String(node.views || 0).padStart(6, '0') %>
+            </div>
+            <p><small>VISITOR COUNT</small></p>
+        </center>
+
+        <h3 style="margin-bottom: 5px; font-size: 10pt;">📂 Sub-Branches (Static & Virtual):</h3>
+        <div style="background: #ffffff; border: 2px inset #ffffff; padding: 10px; margin-bottom: 25px; min-height: 50px; max-height: 150px; overflow-y: auto;">
+            <ul style="margin: 0; padding-left: 20px; list-style-image: url('https://web.archive.org/web/20091027053343/http://geocities.com/SiliconValley/Lab/5980/icons/file.gif');">
+                <% if (node.children && node.children.length > 0) { %>
+                    <% node.children.forEach(child => { %>
+                        <li style="margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                            <a href="<%= child.isStatic ? '/sites/'+child.id+'.html' : '/node/'+child.id %>" style="font-weight: bold; text-decoration: none; color: #0000ee;">
+                                <%= child.title %> <%= child.isStatic ? '[HTML]' : '' %>
+                            </a>
+
+                            <% if (child.isStatic) { %>
+                                <a href="/sites/<%= child.id %>.html" download="<%= child.title %>.html" style="text-decoration: none; margin-left: 10px;">
+                                    <button type="button" style="font-size: 7pt; cursor: pointer; padding: 1px 4px; background: #c0c0c0; border: 1px outset #fff;">
+                                        💾 SAVE SRC
+                                    </button>
+                                </a>
+                            <% } %>
+                        </li>
+                    <% }) %>
+                <% } else { %>
+                    <li style="list-style-type: none; margin-left: -20px; color: #808080;">
+                        <i>No sub-nodes detected in this sector.</i>
+                    </li>
+                <% } %>
+            </ul>
+            
+        </div>
+
+        <div class="window" style="margin-top: 30px; border: 3px outset #fff; box-shadow: 2px 2px 10px rgba(0,0,0,0.5);">
+            <div class="title-bar" style="background: #000080; padding: 5px 10px;">
+                <span style="font-weight: bold; font-size: 11pt;">HELP.HLP - The Architect's Guide</span>
+            </div>
+            <div class="content-area" style="font-size: 10pt; background: #ffffca; color: #000; padding: 20px;">
+                <p><strong>SECTOR CAPACITY:</strong> 2.0 MB (Generous)</p>
+                <strong style="font-size: 12pt;">⚠️ THE "INNER HTML" PROTOCOL</strong>
+                <p style="margin-bottom: 15px;">
+                    The Architect "bakes" your code into a permanent <strong>.html</strong> file. 
+                    Do not provide headers or body tags; only provide the <b>fragment</b> you want displayed.
+                </p>
+                
+                <table width="100%" border="1" cellspacing="0" cellpadding="10" style="border-collapse: collapse; font-family: monospace; background: #fff; font-size: 9pt;">
+                    <tr bgcolor="#c0c0c0">
+                        <td width="50%"><strong>❌ WRONG (Redundant Tags)</strong></td>
+                        <td width="50%"><strong>✅ RIGHT (Pure Fragment)</strong></td>
+                    </tr>
+                    <tr>
+                        <td style="color: #800000; vertical-align: top;">
+                            &lt;!DOCTYPE html&gt;<br>
+                            &lt;html&gt;<br>
+                            &lt;head&gt;...&lt;/head&gt;<br>
+                            &lt;body&gt;<br>
+                            &nbsp;&nbsp;&lt;h1&gt;My Page&lt;/h1&gt;<br>
+                            &lt;/body&gt;<br>
+                            &lt;/html&gt;
+                        </td>
+                        <td style="color: #008000; vertical-align: top;">
+                            &lt;h1&gt;Welcome to my Sector&lt;/h1&gt;<br>
+                            &lt;p&gt;Check out my cool GIF:&lt;/p&gt;<br>
+                            &lt;img src="modern-gif-link.gif"&gt;<br>
+                            &lt;style&gt;<br>
+                            &nbsp;&nbsp;h1 { color: neon-green; }<br>
+                            &lt;/style&gt;
+                        </td>
+                    </tr>
+                </table>
+
+                <p style="margin-top: 15px; font-style: italic; border-left: 3px solid #808080; padding-left: 10px;">
+                    Note: Your fragment will be injected into a pre-styled &lt;div class="baked-container"&gt;. 
+                    You can use &lt;style&gt; tags within your fragment to override local appearances!
+                </p>
+            </div>
+        </div>
+
+        <div style="background: #c0c0c0; padding: 25px; border: 3px outset #ffffff; margin-top: 20px; <%= maintenanceMode ? 'opacity: 0.6;' : '' %>">
+            <h2 style="margin-top: 0; color: #000; border-bottom: 2px solid #808080; padding-bottom: 10px;">🚀 DEPLOY NEW SECTOR</h2>
+            
+            <% if (maintenanceMode) { %>
+                <div style="background: red; color: white; padding: 10px; text-align: center; font-weight: bold; margin-bottom: 10px;">
+                    🚨 ARCHITECT LOCKDOWN ACTIVE - SPAWNING TEMPORARILY DISABLED 🚨
+                </div>
+            <% } %>
+
+            <form action="/spawn/<%= node.id %>" method="POST">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #000;">SITE TITLE:</label>
+                <input type="text" name="title" placeholder="e.g., Shadow Dragon's Lair" required <%= maintenanceMode ? 'disabled' : '' %>
+                    style="width: 100%; padding: 12px; font-size: 14pt; font-family: 'Courier New', monospace; border: 2px inset #fff; margin-bottom: 20px; box-sizing: border-box;">
+
+                <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #000;">RAW SOURCE CODE:</label>
+                <textarea name="htmlContent" rows="12" placeholder="Paste your HTML fragments here..." required <%= maintenanceMode ? 'disabled' : '' %>
+                        style="width: 100%; padding: 15px; font-size: 12pt; font-family: 'Consolas', 'Courier New', monospace; border: 2px inset #fff; margin-bottom: 20px; box-sizing: border-box; background: #000; color: #0f0;"></textarea>
+                
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background: #808080; padding: 15px; border: 2px inset #fff; gap: 15px;">
+                    <div style="display: flex; align-items: center; color: #fff; font-size: 11pt;">
+                        <img src="https://media.tenor.com/6mjhORYQX1UAAAAm/dm4uz3-foekoe.webp" style="margin-right: 10px; width: 30px;">
+                        <strong>HUMANITY CHECK:</strong> 
+                        <span style="margin: 0 10px; font-size: 14pt; background: #000; padding: 2px 10px; border: 1px solid #fff;">
+                            <%= captchaQuestion %>
+                        </span>
+                        <input type="number" name="captchaInput" required <%= maintenanceMode ? 'disabled' : '' %>
+                            style="width: 70px; padding: 8px; font-size: 14pt; border: 2px inset #fff; text-align: center;">
+                    </div>
+                    
+                    <button type="submit" <%= maintenanceMode ? 'disabled' : '' %> 
+                        style="padding: 15px 40px; font-size: 14pt; font-weight: bold; cursor: pointer; background: #c0c0c0; border: 3px outset #fff; text-transform: uppercase; color: #000;">
+                        BRANCH OUT >>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <table width="100%" style="margin-top: 10px;">
+            <tr>
+                <td><small>Sector: <%= node.id %></small></td>
+                <td align="right">
+                    <small>
+                        <a href="/node/root">Return to Source</a> | 
+                        <a href="javascript:history.back()">Go Back</a>
+                    </small>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results - Node Architect</title>
+    <link rel="stylesheet" href="/style.css">
+    
+</head>
+<body style="background-color: #008080; margin: 20px;">
+
+    <div class="window" style="max-width: 600px; margin: 40px auto;">
+        <div class="title-bar">
+            <span>Find: All Nodes</span>
+            <span>[X]</span>
+        </div>
+
+        <div style="background: #c0c0c0; border-bottom: 1px solid #808080; padding: 2px 5px; font-size: 9pt;">
+            <span style="margin-right: 10px;"><u>F</u>ile</span>
+            <span style="margin-right: 10px;"><u>E</u>dit</span>
+            <span style="margin-right: 10px;"><u>V</u>iew</span>
+            <span><u>H</u>elp</span>
+        </div>
+
+        <div class="content-area" style="min-height: 300px;">
+            <p style="margin-top: 0; font-size: 10pt;">
+                Found <strong><%= results.length %></strong> node(s) matching criteria: 
+                <i style="background: #ffff00; padding: 0 4px;">"<%= query %>"</i>
+            </p>
+
+            <div style="border: 2px inset #ffffff; background: #fff; height: 200px; overflow-y: scroll;">
+                <table width="100%" cellpadding="3" cellspacing="0" style="font-size: 10pt; border-collapse: collapse;">
+                    <tr style="background: #000080; color: white; position: sticky; top: 0;">
+                        <th align="left" style="border-right: 1px solid #c0c0c0; padding-left: 5px;">Name</th>
+                        <th align="left" style="padding-left: 5px;">Type</th>
+                        <th align="left" style="padding-left: 5px;">ID</th>
+                    </tr>
+                    
+                    <% if (results.length > 0) { %>
+                        <% results.forEach(node => { %>
+                            <% 
+                                // Determine the correct URL before rendering the row
+                                const targetUrl = node.isStatic ? `/sites/${node.id}.html` : `/node/${node.id}`; 
+                            %>
+                            <tr class="result-row" 
+                                onmouseover="this.style.background='#000080'; this.style.color='white'" 
+                                onmouseout="this.style.background='white'; this.style.color='black'" 
+                                style="cursor: pointer;" 
+                                onclick="window.location.href='<%= targetUrl %>'">
+                                
+                                <td style="padding-left: 5px;">
+                                    <img src="https://cdn-icons-png.flaticon.com/512/8743/8743996.png" 
+     style="vertical-align: middle; margin-right: 5px; width: 16px; height: 16px;">
+                                    <a href="<%= targetUrl %>" style="color: inherit; text-decoration: none; font-weight: bold;">
+                                        <%= node.title %>
+                                    </a>
+                                </td>
+                                <td style="font-size: 8pt; font-weight: bold;">
+                                    <%= node.isStatic ? '[BAKED]' : '[NODE]' %>
+                                </td>
+                                <td style="color: #808080; font-family: monospace;"><%= node.id %></td>
+                            </tr>
+                        <% }) %>
+                    <% } %>
+                </table>
+            </div>
+
+            <div style="margin-top: 20px; text-align: right;">
+                <button id="btn-new-search" style="min-width: 80px;">New Search</button>
+                <button id="btn-back" style="min-width: 80px;">Back</button>
+            </div>
+
+            
+        </div>
+
+        <div style="background: #c0c0c0; border-top: 1px solid #808080; padding: 2px 5px; font-size: 8pt; color: #444;">
+            Searching local disk (C:)... Complete.
+        </div>
+    </div>
+
+                <script>
+                // Handle the Search Filter (Existing logic)
+                const searchInput = document.getElementById('cemeterySearch');
+                if (searchInput) {
+                    searchInput.addEventListener('keyup', function() {
+                        const query = this.value.toLowerCase();
+                        const rows = document.querySelectorAll('.result-row');
+                        rows.forEach(row => {
+                            const text = row.innerText.toLowerCase();
+                            row.style.display = text.includes(query) ? '' : 'none';
+                        });
+                    });
+                }
+
+                // NEW: Handle the Navigation Buttons
+                document.getElementById('btn-back').addEventListener('click', function() {
+                    window.history.back();
+                });
+
+                document.getElementById('btn-new-search').addEventListener('click', function() {
+                    window.location.href = '/node/root';
+                });
+            </script>
+
+</body>
+</html>

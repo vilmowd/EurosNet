@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Login - Node Architect</title>
+    <link rel="stylesheet" href="/style.css">
+    
+</head>
+<body>
+
+    <div class="window" style="width: 320px; margin: 100px auto;">
+        <div class="title-bar">
+            <span>System Login</span>
+            <span>[X]</span>
+        </div>
+        
+        <div class="content-area" style="min-height: auto;">
+            <% if (locals.error) { %>
+                <div class="error-box">
+                    <%= error %>
+                </div>
+            <% } %>
+
+            <form action="/login" method="POST">
+                <p style="margin-top: 0; font-size: 10pt;">Enter credentials for <b>Node Architect</b> access.</p>
+                
+                <label style="font-size: 10pt; font-weight: bold;">User ID:</label><br>
+                <input type="text" name="username" style="width: 100%; margin-bottom: 10px;" required autofocus>
+                
+                <label style="font-size: 10pt; font-weight: bold;">Key:</label><br>
+                <input type="password" name="password" style="width: 100%; margin-bottom: 15px;" required>
+                
+                <div style="text-align: right; border-top: 1px solid #808080; padding-top: 10px; margin-top: 10px;">
+                    <button type="submit">OK</button>
+                    <button type="button" onclick="window.location.href='/'">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>
