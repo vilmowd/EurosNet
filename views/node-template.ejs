@@ -330,11 +330,13 @@
             const response = await fetch('/api/btc');
             const data = await response.json();
             
-            if (data.bitcoin && data.bitcoin.usd) {
-                const price = data.bitcoin.usd.toLocaleString(undefined, { 
+            if (data.bitcoin && typeof data.bitcoin.usd !== 'undefined') {
+                const val = data.bitcoin.usd;
+                const price = val.toLocaleString(undefined, { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
                 });
+                // If it's 0, show $0.00 so you know the script is working but the API is blocked
                 document.getElementById('btc-price').innerText = '$' + price;
             }
         } catch (e) {

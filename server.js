@@ -126,26 +126,22 @@ const spawnLimiter = rateLimit({
 
 app.get('/', (req, res) => res.redirect('/node/root'));
 
-let cachedBTC = { usd: 0 };
-let lastFetch = 0;
-
 app.get('/api/btc', async (req, res) => {
     const now = Date.now();
-    const cacheDuration = 5 * 60 * 1000; // 5 Minutes
+    const cacheDuration = 5 * 60 * 1000;
 
-    // 1. Return cache if it's fresh (saves you from getting banned)
-    if (now - lastFetch < cacheDuration && cachedBTC.usd !== 0) {
+    // 1. Return cache if it's fresh (Removed the !== 0 check)
+    // This stops the server from hammering the API while in "jail"
+    if (now - lastFetch < cacheDuration) {
         return res.json({ bitcoin: cachedBTC });
     }
 
     try {
-        // 2. Fetch from CoinGecko with a timeout and Header
         const response = await axios.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd', {
             timeout: 5000,
             headers: { 'User-Agent': 'Retro-Node-Network-Bot/1.0' }
         });
         
-        // 3. Update cache
         if (response.data && response.data.bitcoin) {
             cachedBTC = response.data.bitcoin;
             lastFetch = now;
@@ -153,11 +149,11 @@ app.get('/api/btc', async (req, res) => {
         } else {
             throw new Error("Invalid API Response");
         }
-
     } catch (error) {
         console.error('BTC Fetch Error:', error.message);
-        
-        // 4. Fallback: If API fails, send the last known good price instead of a 500
+        // Set lastFetch to now even on failure so we don't spam the API 
+        // until the next 5-minute window
+        lastFetch = now; 
         res.json({ bitcoin: cachedBTC });
     }
 });
