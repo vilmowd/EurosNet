@@ -198,10 +198,17 @@ app.get('/node/:id', (req, res) => {
             .sort((a, b) => b.mtime - a.mtime)
             .slice(0, 5);
 
-        // 6. Bulletin Data
+        // 6. Bulletin Data (FIXED TO ROOT)
         let bulletin = [];
-        if (fs.existsSync('./bulletin.json')) {
-            bulletin = JSON.parse(fs.readFileSync('./bulletin.json', 'utf8'));
+        const rootBulletinPath = path.join(__dirname, 'bulletin.json'); 
+
+        if (fs.existsSync(rootBulletinPath)) {
+            try {
+                bulletin = JSON.parse(fs.readFileSync(rootBulletinPath, 'utf8'));
+            } catch (e) {
+                console.error("Bulletin read error:", e);
+                bulletin = [];
+            }
         }
 
         // 7. DYNAMIC CAPTCHA GENERATION
@@ -287,7 +294,7 @@ app.post('/spawn/:parentId', spawnLimiter, (req, res) => {
         const filePath = path.join(__dirname, 'public_sites', `${nodeId}.html`);
         fs.writeFileSync(filePath, fullHtmlPage);
 
-        // 4.5 CREATE THE NODE METADATA (The "Missing Link" for Recent Activity)
+        // 4.5 CREATE THE NODE METADATA
         const newNodeData = {
             id: nodeId,
             title: title,
@@ -308,11 +315,18 @@ app.post('/spawn/:parentId', spawnLimiter, (req, res) => {
             fs.writeFileSync(parentPath, JSON.stringify(parentData, null, 2));
         }
 
-        // --- NEW STEP: 5.5 AUTOMATED GRAFFITI ANNOUNCEMENT ---
-        const bulletinPath = './bulletin.json';
+        // --- SECTION 5.5: AUTOMATED GRAFFITI ANNOUNCEMENT (FIXED TO ROOT) ---
+        const bulletinPath = path.join(__dirname, 'bulletin.json'); 
         let bulletin = [];
+
+        // Read current board
         if (fs.existsSync(bulletinPath)) {
-            bulletin = JSON.parse(fs.readFileSync(bulletinPath, 'utf8'));
+            try {
+                bulletin = JSON.parse(fs.readFileSync(bulletinPath, 'utf8'));
+            } catch (e) { 
+                console.error("Bulletin read error during spawn:", e);
+                bulletin = []; 
+            }
         }
 
         const systemMessage = {
@@ -321,10 +335,15 @@ app.post('/spawn/:parentId', spawnLimiter, (req, res) => {
             date: new Date().toLocaleString()
         };
 
-        bulletin.push(systemMessage);
-        // Keep the wall clean - only keep the last 50 messages
-        if (bulletin.length > 50) bulletin.shift(); 
+        // Add to the START of the array
+        bulletin.unshift(systemMessage); 
         
+        // Keep only the most recent 50 messages
+        if (bulletin.length > 50) {
+            bulletin = bulletin.slice(0, 50);
+        }
+        
+        // Write back to root
         fs.writeFileSync(bulletinPath, JSON.stringify(bulletin, null, 2));
         // ----------------------------------------------------
 
@@ -344,8 +363,8 @@ app.post('/bulletin/post', (req, res) => {
     }
 
     const { username, message } = req.body;
-    const boardPath = './nodes/bulletin.json';
-    const filterPath = './nodes/filters.json';
+    const boardPath = path.join(__dirname, 'bulletin.json'); 
+    const filterPath = path.join(__dirname, 'nodes', 'filters.json');
 
     // 2. Load the Banned Words list
     let bannedWords = [];
