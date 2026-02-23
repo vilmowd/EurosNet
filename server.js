@@ -264,27 +264,24 @@ app.post('/spawn/:parentId', spawnLimiter, (req, res) => {
         const nodeId = uuidv4().substring(0, 8);
         const safeHtml = sanitizeContent(htmlContent); 
 
-        // 3. THE BAKE (Creating the full, standalone HTML file)
+        // 3. THE BAKE (Updated for high-compatibility)
         const fullHtmlPage = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
-    <title>${title}</title>
-    <link rel="stylesheet" href="/style.css">
-</head>
-<body style="background: #000; color: #fff; padding: 20px; font-family: sans-serif;">
-    <div style="max-width: 900px; margin: 0 auto; background: #fff; color: #000; border: 4px ridge #c0c0c0; padding: 20px;">
-        ${safeHtml}
-        <hr>
-        <center>
-            <a href="/node/root" style="color: blue;">[ Return to Node Net ]</a> | 
-            <a href="${nodeId}.html" download="${title}.html" style="color: blue;">[ Download Source ]</a>
-        </center>
-    </div>
-</body>
-</html>`;
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+            <title>${title}</title>
+            </head>
+        <body style="margin: 0; padding: 0; background: #000;">
+            ${safeHtml}
+            
+            <div style="background: #f0f0f0; color: #000; padding: 10px; border-top: 2px solid #808080; font-family: sans-serif; text-align: center;">
+                <a href="/node/root" style="color: blue;">[ Return to Node Net ]</a> | 
+                <a href="${nodeId}.html" download="${title}.html" style="color: blue;">[ Download Source ]</a>
+            </div>
+        </body>
+        </html>`;
 
         // 4. SAVE THE PHYSICAL HTML FILE
         const filePath = path.join(__dirname, 'public_sites', `${nodeId}.html`);

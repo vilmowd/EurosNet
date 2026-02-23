@@ -2,6 +2,27 @@
   "id": "root",
   "title": "THE SOURCE",
   "content": "Welcome to the beginning of the net. All nodes stem from here.",
-  "children": [],
-  "views": 0
+  "children": [
+    {
+      "id": "732176d0",
+      "title": "The Lavender Garden",
+      "isStatic": true
+    },
+    {
+      "id": "26796bd6",
+      "title": "Project Blue-Beam",
+      "isStatic": true
+    },
+    {
+      "id": "f7ecc5c0",
+      "title": "The Frag-Zone 99 (Clan Sector)",
+      "isStatic": true
+    },
+    {
+      "id": "7b1fefab",
+      "title": "The Euros-Net Global Index",
+      "isStatic": true
+    }
+  ],
+  "views": 5
 }
