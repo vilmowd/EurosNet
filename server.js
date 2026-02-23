@@ -126,6 +126,9 @@ const spawnLimiter = rateLimit({
 
 app.get('/', (req, res) => res.redirect('/node/root'));
 
+let cachedBTC = { usd: 0 }; // Persistent storage for the price
+let lastFetch = 0;
+
 app.get('/api/btc', async (req, res) => {
     const now = Date.now();
     const cacheDuration = 5 * 60 * 1000;
