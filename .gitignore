@@ -2,6 +2,5 @@ node_modules/
 .env
 .DS_Store
 bulletin.json
-# Optional: If you don't want your current local nodes uploaded
-# nodes/*.json
-# !nodes/root.json
+nodes/*.json
+!nodes/root.json
