@@ -22,14 +22,23 @@
 
         <div style="background: #c0c0c0; border: 2px outset #ffffff; padding: 5px; margin-bottom: 10px; display: flex; gap: 8px; align-items: center;">
             <a href="/node/root"><button type="button">🏠 Home</button></a>
+            
             <a href="/random" target="_blank">
-    <button type="button">🌀 Teleport</button>
-</a>
+                <button type="button">🌀 Teleport</button>
+            </a>
+
             <a href="https://web.libera.chat/?channels=#retro" target="_blank" style="text-decoration: none;">
                 <button type="button" style="background: #000080; color: white; cursor: pointer;">💬 90s CHAT</button>
             </a>
-            
-            <div style="flex-grow: 1; text-align: right; padding-right: 5px;">
+
+            <a href="https://coinmarketcap.com/currencies/bitcoin/" target="_blank" style="text-decoration: none; flex-grow: 1; margin: 0 10px;">
+                <div style="background: #000; border: 2px inset #808080; color: #32CD32; font-family: 'Courier New', monospace; font-size: 12px; padding: 2px 8px; display: flex; justify-content: space-between; align-items: center; min-width: 140px; cursor: pointer;">
+                    <span style="font-weight: bold;">BTC/USD</span>
+                    <span id="btc-price" style="color: #00FF00;">Loading...</span>
+                </div>
+            </a>
+
+            <div style="text-align: right; padding-right: 5px;">
                 <form action="/search" method="GET" style="display: inline;">
                     <input type="text" name="q" placeholder="Seek..." size="12">
                     <button type="submit">Go</button>
@@ -86,7 +95,7 @@
                                         <strong>Optimized for Windows 10/11.</strong>
                                     </p>
                                     
-                                    <a href="https://www.mediafire.com/file/i38zg6d1ue0xztj/EurosNet+Browser.exe/file" target="_blank" 
+                                    <a href="https://www.mediafire.com/file/3ee6b4yxyzcmbcd/EurosNet+Browser+Release.zip/file" target="_blank" 
                                     style="background-color: #0969da; color: #ffffff; padding: 8px 16px; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 6px; display: inline-block;">
                                     Download via MediaFire
                                     </a>
@@ -278,5 +287,63 @@
     </div>
 </div>
 
+<img id="ghost-cursor" src="/cursor.gif" style="
+    position: fixed; 
+    pointer-events: none; /* Important: clicks go 'through' the gif to the buttons */
+    z-index: 9999; 
+    width: 40px; 
+    height: 40px; 
+    left: 0; 
+    top: 0; 
+    display: none;">
+
+<style>
+    /* Hide the real boring system cursor */
+    html, body, a, button {
+        cursor: none !important;
+    }
+</style>
+
+<script>
+    const ghost = document.getElementById('ghost-cursor');
+    
+    window.addEventListener('mousemove', (e) => {
+        ghost.style.display = 'block';
+        
+        // We remove the "- 16". 
+        // Now the top-left (0,0) of the GIF is exactly at the mouse tip.
+        ghost.style.left = e.clientX + 'px';
+        ghost.style.top = e.clientY + 'px';
+    });
+
+    window.addEventListener('mouseout', () => {
+        ghost.style.display = 'none';
+    });
+</script>
+
 </body>
+
+<script>
+    async function updateBTC() {
+        try {
+            // Now fetching from your OWN server!
+            const response = await fetch('/api/btc');
+            const data = await response.json();
+            
+            if (data.bitcoin && data.bitcoin.usd) {
+                const price = data.bitcoin.usd.toLocaleString(undefined, { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                });
+                document.getElementById('btc-price').innerText = '$' + price;
+            }
+        } catch (e) {
+            console.log("Ticker Error:", e);
+            document.getElementById('btc-price').innerText = 'RETRYING...';
+        }
+    }
+    
+    updateBTC();
+    setInterval(updateBTC, 120000); 
+</script>
 </html>

@@ -17,6 +17,7 @@ const session = require('express-session');
 const helmet = require('helmet');
 const sanitizeHtml = require('sanitize-html');
 const rateLimit = require('express-rate-limit');
+const axios = require('axios');
 
 require('dotenv').config();
 
@@ -39,6 +40,8 @@ if (!fs.existsSync(rootPath)) {
         isUnderConstruction: false
     }));
 }
+
+
 
 
 
@@ -122,6 +125,18 @@ const spawnLimiter = rateLimit({
 // --- PUBLIC ROUTES ---
 
 app.get('/', (req, res) => res.redirect('/node/root'));
+
+app.get('/api/btc', async (req, res) => {
+    try {
+        const response = await axios.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+        // Explicitly send JSON
+        res.setHeader('Content-Type', 'application/json');
+        res.json(response.data);
+    } catch (error) {
+        console.error('Server BTC Fetch Error:', error.message);
+        res.status(500).json({ bitcoin: { usd: 0 } });
+    }
+});
 
 app.get('/node/:id', (req, res) => {
     const filePath = `./nodes/${req.params.id}.json`;
