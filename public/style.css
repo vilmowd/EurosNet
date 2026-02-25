@@ -6,6 +6,10 @@
     display: block;
     clear: both; /* Prevents floating elements from breaking the sidebar */
 }
+.main-content-container {
+    word-break: break-all; /* Forces long strings/URLs to wrap */
+    overflow-x: hidden;    /* Prevents horizontal scrollbars on the container */
+}
 body { 
     background-color: #008080; 
     font-family: "MS Sans Serif", Arial, sans-serif; 
