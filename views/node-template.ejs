@@ -52,12 +52,10 @@
 
         <hr>
 
-        <table width="100%" border="0" cellspacing="0" cellpadding="10">
-            <tr valign="top">
-                <td width="180" style="border-right: 2px ridge #ffffff; background: #d5d5d5; padding: 10px;">
+        <td width="180" style="border-right: 2px ridge #ffffff; background: #d5d5d5; padding: 10px; max-width: 180px; overflow: hidden; word-wrap: break-word;">
                     <center><strong>RECENT ACTIVITY</strong></center>
                     <hr size="1">
-                    <ul style="font-size: 9pt; padding-left: 15px; margin: 5px 0;">
+                    <ul style="font-size: 9pt; padding-left: 15px; margin: 5px 0; overflow: hidden;">
                         <% if (recentNodes && recentNodes.length > 0) { %>
                             <% recentNodes.forEach(recent => { %>
                                 <li style="margin-bottom: 8px;">
@@ -106,7 +104,20 @@
 
                     <br>
 
-                    <div style="background: #c0c0c0; border: 2px solid; border-color: #ffffff #808080 #808080 #ffffff; padding: 15px;">
+                    <div style="height: 500px; 
+                        overflow-y: scroll; 
+                        overflow-x: hidden; /* Prevent horizontal bulging */
+                        word-break: break-all; /* Force long text/links to wrap */
+                        word-wrap: break-word; /* Legacy support for wrapping */
+                        font-size: 10pt; 
+                        border: 3px inset #ffffff; 
+                        background: #fff; 
+                        padding: 15px; 
+                        margin-bottom: 15px; 
+                        color: #000; 
+                        font-family: 'Courier New', monospace; 
+                        background-image: linear-gradient(#f9f9f9 1px, transparent 1px); 
+                        background-size: 100% 1.5em;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <img src="https://i.pinimg.com/originals/b3/37/9f/b3379f1f54c4b498dc151d445a1237ee.gif" width="40">
                             <strong style="font-size: 14pt; letter-spacing: 2px; text-decoration: underline;">[ THE GRAFFITI WALL ]</strong>
