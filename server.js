@@ -30,29 +30,35 @@ const parser = new RSSParser();
 
 
 
-app.get('/proxy-thumb', (req, res) => {
-    const siteName = req.query.site.toLowerCase(); // Force lowercase
-    const imageUrl = `https://screenshots.neocities.org/${siteName}/index.jpg`;
+const cheerio = require('cheerio');
 
-    const options = {
-        headers: { 
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Referer': 'https://neocities.org/' // Pretend we are coming from their own site
-        }
-    };
+app.get('/proxy-browse', async (req, res) => {
+    try {
+        const response = await fetch(
+            'https://neocities.org/browse?sort_by=last_updated',
+            {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0'
+                }
+            }
+        );
 
-    https.get(imageUrl, options, (proxyRes) => {
-        if (proxyRes.statusCode === 200) {
-            res.setHeader('Content-Type', 'image/jpeg');
-            proxyRes.pipe(res);
-        } else {
-            // Log exactly what happened in your terminal
-            console.log(`[Proxy] Neocities rejected ${siteName} with code: ${proxyRes.statusCode}`);
-            res.status(404).send('Not Found');
-        }
-    }).on('error', (err) => {
-        res.status(500).send('Network Error');
-    });
+        const html = await response.text();
+        const $ = cheerio.load(html);
+
+        const sites = [];
+
+        $('.site-info .username a').each((i, el) => {
+            const name = $(el).text().trim().toLowerCase();
+            if (name) sites.push({ name });
+        });
+
+        res.json(sites.slice(0, 30));
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Browse scrape failed');
+    }
 });
 
 
