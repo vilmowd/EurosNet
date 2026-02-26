@@ -302,13 +302,25 @@ app.post('/spawn/:parentId', spawnLimiter, (req, res) => {
             <meta charset="UTF-8">
             <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
             <title>${title}</title>
-            </head>
-        <body style="margin: 0; padding: 0; background: #000;">
-            ${safeHtml}
-            
-            <div style="background: #f0f0f0; color: #000; padding: 10px; border-top: 2px solid #808080; font-family: sans-serif; text-align: center;">
-                <a href="/node/root" style="color: blue;">[ Return to Node Net ]</a> | 
-                <a href="${nodeId}.html" download="${title}.html" style="color: blue;">[ Download Source ]</a>
+            <link rel="stylesheet" href="/style.css">
+        </head>
+        <body style="background-color: #008080; margin: 0; padding: 10px;">
+            <div class="window-full">
+                <div class="title-bar">
+                    <span>Sector: ${title}</span>
+                    <span>X</span>
+                </div>
+                <div class="content-area">
+                    <div class="main-content">
+                        ${safeHtml}
+                    </div>
+                    
+                    <hr style="margin-top: 50px;">
+                    <center>
+                        <button onclick="window.location.href='/node/root'">[ Return to Node Net ]</button>
+                        <a href="${nodeId}.html" download="${title}.html" style="margin-left: 10px;">[ Download Source ]</a>
+                    </center>
+                </div>
             </div>
         </body>
         </html>`;

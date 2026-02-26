@@ -27,6 +27,25 @@ body {
     margin: 0 auto;
     padding: 2px;
 }
+/* New class for user-created sectors */
+.window-full {
+    background-color: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    width: 98%;          /* Fills almost the whole screen */
+    margin: 10px auto;   /* Small margin at top/bottom */
+    padding: 2px;
+}
+
+/* Ensure the content inside the full window also expands */
+.window-full .content-area {
+    background: white;
+    border: 2px inset #ffffff;
+    padding: 20px;
+    margin: 4px;
+    color: black;
+    min-height: 85vh;    /* Makes the white area tall */
+}
 
 .title-bar {
     background: linear-gradient(90deg, #000080, #1084d0);
