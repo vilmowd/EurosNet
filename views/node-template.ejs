@@ -2,13 +2,13 @@
 <html>
 <head>
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DSC0MWV0DY"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-952HEQ022K"></script>
     <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
 
-    gtag('config', 'G-DSC0MWV0DY');
+    gtag('config', 'G-952HEQ022K');
     </script>
     <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
     <title>Euros-Explore And Create</title>
@@ -79,6 +79,32 @@
                         <% } %>
                     </ul>
                 </td>
+
+                <fieldset style="border: 2px ridge #c0c0c0; padding: 5px; margin-top: 10px; background: #c0c0c0; width: 100%; box-sizing: border-box; font-family: 'Tahoma', sans-serif;">
+                    <legend style="font-weight: bold; background: #000080; color: white; padding: 0 5px; font-size: 10px;">WEB-AMP v2.0</legend>
+                    
+                    <div style="background: #000; border: 2px inset #fff; padding: 4px; margin-bottom: 5px; height: 35px; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div id="radio-status" style="color: #00ff00; font-family: 'Courier New', monospace; font-size: 9px; overflow: hidden; white-space: nowrap;">
+                            SYSTEM READY...
+                        </div>
+                        <div id="viz-container" style="display: none; height: 10px; width: 100%; overflow: hidden;">
+                            <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJ6ZnMxeW5xeXU5Znd6Z3Z6Z3Z6Z3Z6Z3Z6Z3Z6Z3Z6Z3Z6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKMGpxx33vU5BeE/giphy.gif" 
+                                style="width: 100%; height: 100%; filter: hue-rotate(90deg) brightness(1.5);">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 3px; justify-content: center; align-items: center;">
+                        <button id="btn-play" style="font-size: 9px; font-weight: bold; cursor: pointer; background: #c0c0c0; border: 2px outset #fff; padding: 2px 4px; min-width: 40px;">PLAY</button>
+                        <button id="btn-stop" style="font-size: 9px; font-weight: bold; cursor: pointer; background: #c0c0c0; border: 2px outset #fff; padding: 2px 4px; min-width: 40px;">STOP</button>
+                        
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <span style="font-size: 7px; margin-bottom: -2px;">VOL</span>
+                            <input type="range" id="radio-volume" min="0" max="1" step="0.1" value="0.5" style="width: 40px; height: 12px; cursor: pointer;">
+                        </div>
+                    </div>
+
+                    <audio id="radio-audio" crossorigin="anonymous"></audio>
+                </fieldset>
 
                <fieldset style="border: 2px ridge #c0c0c0; padding: 5px; margin-top: 20px; width: 100%; box-sizing: border-box; margin-left: 0; margin-right: 0;">
                     <legend style="font-weight: bold; background: #c0c0c0; padding: 0 5px;">NEOCITIES GATEWAY</legend>
@@ -423,5 +449,52 @@
     }
 }
 loadNeocities();
+
+
+// --- RADIO PLAYER LOGIC (STABLE VERSION) ---
+document.addEventListener('DOMContentLoaded', () => {
+    const audioPlayer = document.getElementById('radio-audio');
+    const statusText = document.getElementById('radio-status');
+    const vizBox = document.getElementById('viz-container');
+    const btnPlay = document.getElementById('btn-play');
+    const btnStop = document.getElementById('btn-stop');
+    const volSlider = document.getElementById('radio-volume');
+
+    const streamUrl = "https://ice1.somafm.com/indiepop-128-mp3";
+
+    // Only proceed if all elements exist
+    if (btnPlay && btnStop && audioPlayer) {
+        
+        btnPlay.addEventListener('click', () => {
+            if (!audioPlayer.src || audioPlayer.src === "") {
+                audioPlayer.src = streamUrl;
+            }
+            
+            audioPlayer.play().then(() => {
+                if (vizBox) vizBox.style.display = 'block';
+                statusText.innerHTML = "<marquee scrollamount='3'>NOW PLAYING: 2000s SATELLITE RELAY - BROADCASTING FROM THE PAST...</marquee>";
+            }).catch(err => {
+                statusText.innerHTML = "ERROR: CLICK PLAY AGAIN";
+                console.error("Playback error:", err);
+            });
+        });
+
+        btnStop.addEventListener('click', () => {
+            audioPlayer.pause();
+            audioPlayer.src = ""; // Hard stop for stream
+            audioPlayer.load();
+            if (vizBox) vizBox.style.display = 'none';
+            statusText.innerHTML = "SYSTEM PAUSED";
+        });
+
+        if (volSlider) {
+            volSlider.addEventListener('input', (e) => {
+                audioPlayer.volume = e.target.value;
+            });
+        }
+    } else {
+        console.error("Radio Error: One or more UI elements not found.");
+    }
+});
 </script>
 </html>
