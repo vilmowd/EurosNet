@@ -12,11 +12,22 @@ const crypticPhrases = [
     "Encryption is just a polite way of saying 'Keep Out'."
 ];
 
+// New: Randomized Bulletin Announcements
+const manifestMessages = [
+    "MATERIALIZATION: Node ${id} has been manifested in the ghost sector.",
+    "SIGNAL DETECTED: Fragment ${id} has emerged from the void.",
+    "INTRUSION: Unauthorized data packet ${id} has been baked into reality.",
+    "ECHO: Sector ${id} is now broadcasting from the shadows.",
+    "NOTICE: The Architect has concluded the construction of fragment ${id}."
+];
+
 function generatePhantomNode() {
     const id = Math.floor(10000 + Math.random() * 89999).toString();
     const nodesDir = path.join(__dirname, 'nodes');
     const sitesDir = path.join(__dirname, 'sites');
+    const bulletinPath = path.join(__dirname, 'bulletin.json');
 
+    // ENSURE DIRECTORIES EXIST
     if (!fs.existsSync(nodesDir)) fs.mkdirSync(nodesDir, { recursive: true });
     if (!fs.existsSync(sitesDir)) fs.mkdirSync(sitesDir, { recursive: true });
 
@@ -39,9 +50,10 @@ function generatePhantomNode() {
     };
 
     try {
+        // 1. SAVE THE BRAIN (JSON)
         fs.writeFileSync(path.join(nodesDir, `${id}.json`), JSON.stringify(nodeData, null, 2));
 
-        // THE ELABORATE TEMPLATE
+        // 2. BAKE THE BODY (HTML)
         const htmlContent = `
             <!DOCTYPE html>
             <html lang="en">
@@ -112,11 +124,34 @@ function generatePhantomNode() {
         `;
 
         fs.writeFileSync(path.join(sitesDir, `${id}.html`), htmlContent);
-        console.log(`[!] ARCHITECT: Elaborate Node ${id} baked successfully.`);
+
+        // 3. POST TO THE GRAFFITI WALL (Bulletin)
+        let bulletin = [];
+        if (fs.existsSync(bulletinPath)) {
+            try {
+                bulletin = JSON.parse(fs.readFileSync(bulletinPath, 'utf8'));
+            } catch (e) { bulletin = []; }
+        }
+
+        // Pick a random message style and inject the ID
+        const rawMessage = manifestMessages[Math.floor(Math.random() * manifestMessages.length)];
+        const finalMessage = rawMessage.replace('${id}', id) + ` [View: /sites/${id}.html]`;
+
+        const architectEntry = {
+            username: "THE_ARCHITECT",
+            message: `👁️ ${finalMessage}`,
+            date: new Date().toLocaleString()
+        };
+
+        bulletin.unshift(architectEntry);
+        if (bulletin.length > 50) bulletin = bulletin.slice(0, 50);
+        fs.writeFileSync(bulletinPath, JSON.stringify(bulletin, null, 2));
+
+        console.log(`[!] ARCHITECT: Node ${id} baked and announced on the wall.`);
+
     } catch (err) {
         console.error(`[!] ARCHITECT ERROR: Failed to bake node ${id}:`, err);
     }
 }
-
 
 module.exports = { generatePhantomNode };

@@ -1,52 +1,70 @@
-.main-content {
-    all: revert; /* Resets any leaked styles */
-    overflow: auto; /* Adds scrollbars if their content is too wide */
-    max-width: 100%;
-    word-wrap: break-word;
-    display: block;
-    clear: both; /* Prevents floating elements from breaking the sidebar */
-}
-.main-content-container {
-    word-break: break-all; /* Forces long strings/URLs to wrap */
-    overflow-x: hidden;    /* Prevents horizontal scrollbars on the container */
-}
-body { 
-    background-color: #008080; 
-    font-family: "MS Sans Serif", Arial, sans-serif; 
-    font-size: 12pt;
-    margin: 20px;
-    
+/* --- PRIMARY LAYOUT ENGINE --- */
+
+/* Parent wrapper for sidebar and content */
+.system-container {
+    display: flex;
+    align-items: flex-start; /* Sidebar height fits its content only */
+    gap: 0;                  /* No gap for a seamless "pane" look */
+    width: 100%;
 }
 
 .window {
     background-color: #c0c0c0;
     border: 2px solid;
     border-color: #ffffff #808080 #808080 #ffffff;
-    width: 90%;
-    max-width: 800px;
+    width: 95%;          
+    max-width: 1200px;   /* Wide enough for complex content */
     margin: 0 auto;
     padding: 2px;
 }
-/* New class for user-created sectors */
-.window-full {
-    background-color: #c0c0c0;
-    border: 2px solid;
-    border-color: #ffffff #808080 #808080 #ffffff;
-    width: 98%;          /* Fills almost the whole screen */
-    margin: 10px auto;   /* Small margin at top/bottom */
-    padding: 2px;
+
+/* --- SIDEBAR: MATCHING CONTENT STYLE --- */
+aside.sidebar {
+    width: 180px;        
+    flex-shrink: 0;      
+    background: white;   /* Matched to main content */
+    border: 2px inset #ffffff; /* Matched inset border */
+    padding: 15px;
+    margin: 4px 0 4px 4px; /* Matches content-area spacing */
+    font-family: "MS Sans Serif", Arial, sans-serif; /* Matched font */
+    color: black;        /* Matched text color */
 }
 
-/* Ensure the content inside the full window also expands */
-.window-full .content-area {
+/* --- MAIN CONTENT AREA --- */
+.content-area {
     background: white;
     border: 2px inset #ffffff;
     padding: 20px;
     margin: 4px;
     color: black;
-    min-height: 85vh;    /* Makes the white area tall */
+    min-height: 200px;
+    flex-grow: 1;        
+    min-width: 0;        
 }
 
+/* --- GLOBAL STYLES --- */
+body { 
+    background-color: #008080; 
+    font-family: "MS Sans Serif", Arial, sans-serif; 
+    font-size: 12pt;
+    margin: 20px;
+}
+
+.main-content {
+    all: revert;
+    overflow: auto;
+    max-width: 100%;
+    word-wrap: break-word;
+    display: block;
+    clear: both;
+}
+
+.main-content-container {
+    word-break: break-all;
+    overflow-x: hidden;
+}
+
+/* --- WINDOW COMPONENTS --- */
 .title-bar {
     background: linear-gradient(90deg, #000080, #1084d0);
     color: white;
@@ -56,15 +74,47 @@ body {
     justify-content: space-between;
 }
 
-.content-area {
+.window-full {
+    background-color: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    width: 98%;
+    margin: 10px auto;
+    padding: 2px;
+}
+
+.window-full .content-area {
     background: white;
     border: 2px inset #ffffff;
     padding: 20px;
     margin: 4px;
     color: black;
-    min-height: 200px;
+    min-height: 85vh;
 }
 
+/* --- INTERACTIVE ELEMENTS --- */
+button {
+    background-color: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    padding: 2px 10px;
+    font-weight: bold;
+    font-family: "MS Sans Serif", Arial, sans-serif;
+    cursor: pointer;
+}
+
+button:active {
+    border-color: #808080 #ffffff #ffffff #808080;
+}
+
+input, textarea {
+    background-color: #ffffff;
+    border: 2px inset #d5d5d5;
+    padding: 4px;
+    font-family: inherit;
+}
+
+/* --- RETRO ACCENTS --- */
 .hit-counter {
     background: #000;
     color: #ff0000;
@@ -75,25 +125,6 @@ body {
     margin-top: 10px;
 }
 
-input, textarea, button {
-    background-color: #ffffff;
-    border: 2px inset #d5d5d5;
-}
-
-button {
-    background-color: #c0c0c0;
-    border: 2px solid;
-    border-color: #ffffff #808080 #808080 #ffffff;
-    padding: 2px 10px;
-    font-weight: bold;
-}
-
-button:active {
-    border-color: #808080 #ffffff #ffffff #808080;
-}
-
-
-/* Add this to your existing CSS */
 .error-box {
     background: #800000;
     color: #ffffff;
@@ -105,11 +136,10 @@ button:active {
     font-family: 'Courier New', monospace;
 }
 
-.content-area a:hover {
+.content-area a:hover, .sidebar a:hover {
     background-color: #000080;
     color: #ffffff !important;
 }
-
 
 .neocities-thumb:hover {
     filter: brightness(1.5) contrast(1.2);

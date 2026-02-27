@@ -31,6 +31,8 @@ const parser = new RSSParser();
 
 
 
+
+
 const cheerio = require('cheerio');
 
 app.get('/proxy-browse', async (req, res) => {
@@ -203,23 +205,27 @@ app.use(
       useDefaults: true, 
       directives: {
         "default-src": ["'self'"],
-        // 1. Added Google Tag Manager here
-        "script-src": ["'self'", "'unsafe-inline'", "https://www.googletagmanager.com"],
+        // Added 'unsafe-eval' in case any of your mystery scripts or 90s widgets need it
+        "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://www.googletagmanager.com"],
         "style-src": ["'self'", "'unsafe-inline'"],
         "img-src": ["*", "data:", "blob:", "https://images.weserv.nl"],
         "media-src": ["*", "data:", "blob:"],
         "frame-src": ["*"],
-        // 2. Added corsproxy.io and Google Analytics here
         "connect-src": [
           "'self'", 
           "https://corsproxy.io", 
           "https://*.google-analytics.com", 
           "https://*.analytics.google.com", 
-          "https://*.googletagmanager.com"
+          "https://*.googletagmanager.com",
+          "https://news.ycombinator.com", // Allow the Archivist to fetch news
+          "*" // WARNING: This is broad, but useful for the 'Rabbit Hole' mysteries to function
         ],
+        // Set this to null if you are running on localhost without SSL (HTTP)
         "upgrade-insecure-requests": null,
       },
     },
+    // Required to allow cross-origin images (like the Geocities GIFs) to load correctly
+    crossOriginEmbedderPolicy: false,
   })
 );
 
@@ -238,6 +244,10 @@ app.use('/sites', express.static(path.join(__dirname, 'sites')));
 app.set('view engine', 'ejs');
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ limit: '5mb', extended: true }));
+app.use((req, res, next) => {
+    res.locals.activeEntities = activeEntities;
+    next();
+});
 
 const sanitizeContent = (dirty) => {
     return sanitizeHtml(dirty, {
@@ -416,11 +426,12 @@ app.get('/node/:id', (req, res) => {
         // 9. RENDER
         res.render('node-template', { 
             node,
+            activeEntities: activeEntities,
             captchaQuestion,
             recentNodes, 
             bulletin, 
             broadcast, 
-            maintenanceMode: maintenanceStatus 
+            maintenanceMode: maintenanceStatus
         });
 
     } catch (err) {
@@ -1075,13 +1086,29 @@ app.post('/admin/trigger-architect', (req, res) => {
 
 app.get('/api/phantoms', (req, res) => {
     const nodesDir = path.join(__dirname, 'nodes');
+    
+    // Safety check: if folder doesn't exist yet
+    if (!fs.existsSync(nodesDir)) return res.json([]);
+
     const files = fs.readdirSync(nodesDir);
     
     const phantoms = files
         .filter(f => f.endsWith('.json'))
         .map(f => {
             try {
-                return JSON.parse(fs.readFileSync(path.join(nodesDir, f), 'utf8'));
+                const data = JSON.parse(fs.readFileSync(path.join(nodesDir, f), 'utf8'));
+                
+                // --- THE FIX: MANUALLY CONSTRUCT THE URL ---
+                // If the JSON doesn't have 'url', we create it here
+                const nodeId = f.replace('.json', '');
+                
+                return {
+                    id: nodeId,
+                    title: data.title || `NODE_${nodeId}`,
+                    author: data.author,
+                    // Ensure the URL points to /sites/ for static or /node/ for dynamic
+                    url: data.isStatic ? `/sites/${nodeId}.html` : `/node/${nodeId}`
+                };
             } catch (e) { return null; }
         })
         .filter(n => n && n.author === "THE_ARCHITECT");
@@ -1090,8 +1117,83 @@ app.get('/api/phantoms', (req, res) => {
 });
 
 
+function injectSystemNoise() {
+    const protocols = ["SSH", "FTP", "SMTP", "ROOT_ACCESS"];
+    const protocol = protocols[Math.floor(Math.random() * protocols.length)];
+    const fakeIP = `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
+    const bulletinPath = path.join(__dirname, 'bulletin.json');
 
+    const noise = {
+        username: "SYS_DAEMON",
+        message: `[WARNING]: ${protocol} attempt detected from ${fakeIP}. Blocked by Architect.`,
+        date: new Date().toLocaleString(),
+        isSystem: true
+    };
 
+    try {
+        let bulletin = [];
+
+        // 1. Read existing wall data
+        if (fs.existsSync(bulletinPath)) {
+            const fileData = fs.readFileSync(bulletinPath, 'utf8');
+            bulletin = JSON.parse(fileData || "[]");
+        }
+
+        // 2. Inject the noise at the top
+        bulletin.unshift(noise);
+
+        // 3. Keep the wall clean (limit to 50 entries)
+        if (bulletin.length > 50) {
+            bulletin = bulletin.slice(0, 50);
+        }
+
+        // 4. Commit to disk
+        fs.writeFileSync(bulletinPath, JSON.stringify(bulletin, null, 2));
+        
+        console.log(`[SYS_LOG]: Injected noise packet - ${protocol} from ${fakeIP}`);
+
+    } catch (err) {
+        console.error("[!] NOISE_ERROR: Could not update bulletin.json", err);
+    }
+}
+
+let activeEntities = [];
+
+function updateGhostTraffic() {
+    // Randomly add or remove "Ghosts"
+    if (activeEntities.length < 15) {
+        activeEntities.push({
+            id: Math.random().toString(36).substring(7),
+            loc: ["/nodes", "/sites", "/secret-terminal"][Math.floor(Math.random()*3)],
+            status: ["IDLE", "DECRYPTING", "DOWNLOADING", "LURKING"][Math.floor(Math.random()*3)]
+        });
+    }
+    if (activeEntities.length > 2) activeEntities.shift();
+}
+
+async function refreshSidebar() {
+    try {
+        const res = await fetch('/api/system-status'); // We'll create this route
+        const data = await res.json();
+        
+        const ghostList = document.getElementById('ghost-list');
+        ghostList.innerHTML = data.activeEntities.map(e => `
+            <div style="margin-bottom: 4px;">• GHOST_${e.id}<br>
+            &nbsp;&nbsp;[${e.status}]</div>
+        `).join('');
+    } catch (err) {
+        console.error("Sidebar sync lost...");
+    }
+}
+
+setInterval(refreshSidebar, 100000);
+
+app.get('/api/system-status', (req, res) => {
+    res.json({
+        activeEntities: activeEntities, // The array we made earlier
+        entropy: systemStatus.entropy
+    });
+});
 
 app.listen(port, () => {
     console.log(`[SYSTEM ONLINE]: Architect Terminal active on port ${port}`);
@@ -1123,4 +1225,8 @@ app.listen(port, () => {
     console.log("[BOT]: Architect scheduled for 4-hour intervals."); 
 
     console.log("[GC]: Garbage Collector scheduled for 1-hour intervals.");
+
+    setInterval(injectSystemNoise, 1000 * 60 * 60 * 4);
+
+    setInterval(updateGhostTraffic, 10000);
 });
