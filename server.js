@@ -678,7 +678,7 @@ app.get('/search', (req, res) => {
 });
 
 app.get('/random', (req, res) => {
-    const sitesDir = path.join(__dirname, 'public_sites');
+    const sitesDir = path.join(__dirname, 'sites');
 
     if (!fs.existsSync(sitesDir)) {
         return res.redirect('/node/root');

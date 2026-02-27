@@ -1,6 +1,3 @@
 node_modules/
 .env
 .DS_Store
-bulletin.json
-nodes/*.json
-!nodes/root.json
