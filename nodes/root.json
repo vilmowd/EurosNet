@@ -3,41 +3,6 @@
   "title": "THE SOURCE",
   "content": "Welcome to the beginning of the net. All nodes stem from here.",
   "children": [
-    {
-      "id": "732176d0",
-      "title": "The Lavender Garden",
-      "isStatic": true
-    },
-    {
-      "id": "26796bd6",
-      "title": "Project Blue-Beam",
-      "isStatic": true
-    },
-    {
-      "id": "f7ecc5c0",
-      "title": "The Frag-Zone 99 (Clan Sector)",
-      "isStatic": true
-    },
-    {
-      "id": "d7e3ef1f",
-      "title": "EUROS-NET PORTAL",
-      "isStatic": true
-    },
-    {
-      "id": "93f4638f",
-      "title": "Bradly and suck <3",
-      "isStatic": true
-    },
-    {
-      "id": "news-41697253",
-      "title": "[NEWS] AirSnitch: Demystifying and breaking client isolation in Wi-Fi networks [pdf]",
-      "isStatic": true
-    },
-    {
-      "id": "news-53746174",
-      "title": "[NEWS] Statement from Dario Amodei on Our Discussions with the Department of War",
-      "isStatic": true
-    }
   ],
   "views": 320
 }
