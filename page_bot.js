@@ -118,4 +118,5 @@ function generatePhantomNode() {
     }
 }
 
+
 module.exports = { generatePhantomNode };
