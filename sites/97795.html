@@ -1,53 +1,9 @@
-const fs = require('fs');
-const path = require('path');
 
-// --- THE ARCHITECT'S BRAIN (Randomized Pools) ---
-const subjects = ["VOID", "TRANSMISSION", "PROTOCOL", "ENTITY", "CORE", "SATELLITE", "NEURAL_NET"];
-const actions = ["COLLECTING", "PURGING", "RECONSTRUCTING", "OBSERVING", "CORRUPTING"];
-const crypticPhrases = [
-    "The clock counts backward in the basement of the web.",
-    "Do not trust the root directory. It remembers everything.",
-    "Oxygen is a luxury the digital ghost does not require.",
-    "Signal lost. Signal found. Signal is you.",
-    "Encryption is just a polite way of saying 'Keep Out'."
-];
-
-function generatePhantomNode() {
-    const id = Math.floor(10000 + Math.random() * 89999).toString();
-    const nodesDir = path.join(__dirname, 'nodes');
-    const sitesDir = path.join(__dirname, 'sites');
-
-    if (!fs.existsSync(nodesDir)) fs.mkdirSync(nodesDir, { recursive: true });
-    if (!fs.existsSync(sitesDir)) fs.mkdirSync(sitesDir, { recursive: true });
-
-    // Generate random elaborate content
-    const subject = subjects[Math.floor(Math.random() * subjects.length)];
-    const action = actions[Math.floor(Math.random() * actions.length)];
-    const phrase = crypticPhrases[Math.floor(Math.random() * crypticPhrases.length)];
-    
-    const nodeData = {
-        id: id,
-        title: `[!] ARCHITECT_LOG_${id}::${subject}`,
-        content: phrase,
-        author: "THE_ARCHITECT",
-        isStatic: true,
-        timestamp: new Date().toISOString(),
-        metadata: {
-            entropy_level: (Math.random() * 100).toFixed(2) + "%",
-            sector: Math.floor(Math.random() * 99)
-        }
-    };
-
-    try {
-        fs.writeFileSync(path.join(nodesDir, `${id}.json`), JSON.stringify(nodeData, null, 2));
-
-        // THE ELABORATE TEMPLATE
-        const htmlContent = `
             <!DOCTYPE html>
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
-                <title>${nodeData.title}</title>
+                <title>[!] ARCHITECT_LOG_97795::ENTITY</title>
                 <link rel="stylesheet" href="/style.css">
                 <style>
                     :root { --main-glow: #00ff41; --danger: #ff003c; }
@@ -81,21 +37,21 @@ function generatePhantomNode() {
                 <div class="terminal-overlay"></div>
                 <div class="container">
                     <div class="header">
-                        <h1 class="glitch-text">> ${nodeData.title}</h1>
-                        <p>TIMESTAMP: ${nodeData.timestamp} | SECTOR: ${nodeData.metadata.sector}</p>
+                        <h1 class="glitch-text">> [!] ARCHITECT_LOG_97795::ENTITY</h1>
+                        <p>TIMESTAMP: 2026-02-27T05:30:48.187Z | SECTOR: 93</p>
                     </div>
 
                     <div class="log-box">
-                        <strong>[ARCHITECT_SYSTEM_NOTICE]:</strong> ${action} SEQUENCE INITIATED...<br>
-                        <strong>TARGET:</strong> ${subject}<br>
+                        <strong>[ARCHITECT_SYSTEM_NOTICE]:</strong> CORRUPTING SEQUENCE INITIATED...<br>
+                        <strong>TARGET:</strong> ENTITY<br>
                         <strong>STATUS:</strong> CRITICAL UNSTABLE
                     </div>
 
                     <h2>MANIFESTED_THOUGHT:</h2>
-                    <p style="font-size: 1.5em; line-height: 1.6;">"${nodeData.content}"</p>
+                    <p style="font-size: 1.5em; line-height: 1.6;">"Oxygen is a luxury the digital ghost does not require."</p>
 
                     <table class="data-table">
-                        <tr><td>ENTROPY_INDEX</td><td>${nodeData.metadata.entropy_level}</td></tr>
+                        <tr><td>ENTROPY_INDEX</td><td>2.03%</td></tr>
                         <tr><td>VOLATILITY</td><td>HIGH</td></tr>
                         <tr><td>UPLINK_STATUS</td><td>CONNECTED_VIA_VOID</td></tr>
                         <tr><td>NODE_INTEGRITY</td><td>CORRUPTED</td></tr>
@@ -109,13 +65,4 @@ function generatePhantomNode() {
                 </div>
             </body>
             </html>
-        `;
-
-        fs.writeFileSync(path.join(sitesDir, `${id}.html`), htmlContent);
-        console.log(`[!] ARCHITECT: Elaborate Node ${id} baked successfully.`);
-    } catch (err) {
-        console.error(`[!] ARCHITECT ERROR: Failed to bake node ${id}:`, err);
-    }
-}
-
-module.exports = { generatePhantomNode };
+        

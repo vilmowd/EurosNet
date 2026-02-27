@@ -118,6 +118,50 @@
                         </fieldset>
                     </td>
 
+                    <fieldset style="border: 2px solid #ff0000; background: #1a0000; color: #ff0000; margin-bottom: 20px; padding: 10px; font-family: 'Courier New', monospace;">
+                        <legend style="background: #ff0000; color: #000; font-weight: bold; padding: 0 5px;">THE_ARCHITECT.monitor [v2.0]</legend>
+                        
+                        <div style="font-size: 8pt; margin-bottom: 10px; border-bottom: 1px solid #440000; padding-bottom: 5px;">
+                            SCANNING SECTOR FOR AUTONOMOUS GHOST-NODES...
+                        </div>
+
+                        <div style="max-height: 150px; overflow-y: auto; background: #000; border: 1px solid #440000; padding: 5px;">
+                            <table width="100%" style="font-size: 8pt; border-collapse: collapse;">
+                                <% 
+                                    // Filter nodes created by the bot
+                                    const phantomNodes = allNodes.filter(n => n.author === "THE_ARCHITECT");
+                                    if (phantomNodes.length > 0) { 
+                                        phantomNodes.forEach(node => { 
+                                %>
+                                    <tr style="border-bottom: 1px solid #220000;">
+                                        <td style="padding: 2px;">[!] NODE_<%= node.id %></td>
+                                        <td style="padding: 2px; color: #ff5555;"><%= node.title %></td>
+                                        <td align="right" style="padding: 2px;">
+                                            <a href="/node/<%= node.id %>" target="_blank" style="color: #00ff00; text-decoration: none;">[VIEW]</a>
+                                            <form action="/delete/<%= node.id %>" method="POST" style="display:inline; margin-left: 5px;">
+                                                <input type="hidden" name="adminPass" value="<%= key %>">
+                                                <input type="hidden" name="reason" value="Exorcised by Admin">
+                                                <button type="submit" style="background: transparent; border: none; color: #ff0000; cursor: pointer; font-family: 'Courier New'; font-size: 8pt;">[EXORCISE]</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                <% }); } else { %>
+                                    <tr><td colspan="3" style="text-align: center; color: #440000; padding: 10px;">NO PHANTOM SIGNALS DETECTED.</td></tr>
+                                <% } %>
+                            </table>
+                        </div>
+
+                        <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 7pt;">TOTAL_PHANTOMS: <%= phantomNodes.length %></span>
+                            <form action="/admin/trigger-architect" method="POST">
+                                <input type="hidden" name="adminPass" value="<%= key %>">
+                                <button type="submit" style="background: #440000; color: #ff0000; border: 1px solid #ff0000; font-size: 7pt; cursor: pointer; padding: 2px 5px;">
+                                    RE-INITIALIZE ARCHITECT.exe
+                                </button>
+                            </form>
+                        </div>
+                    </fieldset>
+
                     <td width="50%">
                         <fieldset style="height: 105px; margin-bottom: 20px;">
                             <legend><strong>Bulletin Board</strong></legend>
@@ -192,7 +236,10 @@
                             <strong><%= node.title %></strong><br>
                             <span style="font-size: 7pt; color: #666;">
                                 TYPE: <%= node.isStatic ? '📦 STATIC HTML' : '🖥️ VIRTUAL JSON' %>
-                            </span>
+                                <% if (node.author === "THE_ARCHITECT") { %>
+                                    <br><span style="color: #ff0000; font-weight: bold; font-size: 7pt;">⚠️ PHANTOM SIGNATURE DETECTED</span>
+                                <% } %>
+                                </span>
                         </td>
                         <td><code><%= node.parentId || '---' %></code></td>
                         <td align="center">
@@ -249,15 +296,17 @@
     </div>
 
     <script>
-        // Cemetery search functionality
-        document.getElementById('cemeterySearch').addEventListener('keyup', function() {
-            const query = this.value.toLowerCase();
-            const rows = document.querySelectorAll('.cemetery-row');
-            rows.forEach(row => {
-                const text = row.innerText.toLowerCase();
-                row.style.display = text.includes(query) ? '' : 'none';
+        const searchInput = document.getElementById('cemeterySearch');
+        if (searchInput) { // This "if" prevents the error
+            searchInput.addEventListener('keyup', function() {
+                const query = this.value.toLowerCase();
+                const rows = document.querySelectorAll('.cemetery-row');
+                rows.forEach(row => {
+                    const text = row.innerText.toLowerCase();
+                    row.style.display = text.includes(query) ? '' : 'none';
+                });
             });
-        });
+        }
     </script>
 </body>
 </html>

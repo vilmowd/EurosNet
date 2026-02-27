@@ -1,5 +1,5 @@
 const https = require('https');
-require('./page_bot.js');
+const { generatePhantomNode } = require('./page_bot');
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -234,7 +234,7 @@ app.use(session({
 }));
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
-app.use('/sites', express.static(path.join(__dirname, 'public_sites')));
+app.use('/sites', express.static(path.join(__dirname, 'sites')));
 app.set('view engine', 'ejs');
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ limit: '5mb', extended: true }));
@@ -320,93 +320,103 @@ app.get('/api/btc', async (req, res) => {
 });
 
 app.get('/node/:id', (req, res) => {
-    const filePath = `./nodes/${req.params.id}.json`;
+    // 1. CLEAN & SYNC PATHING
+    const nodeId = req.params.id.trim();
+    const nodesDir = path.join(__dirname, 'nodes');
+    const sitesDir = path.join(__dirname, 'sites'); // Ensure this matches your static folder
+    const filePath = path.join(nodesDir, `${nodeId}.json`);
     
-    // 1. Check if node exists
+    // 2. EXISTENCE CHECK
     if (!fs.existsSync(filePath)) {
-        return res.send("Node lost. <a href='/'>Back to Source</a>");
+        console.warn(`[!] Access Denied: Node "${nodeId}" not found on disk.`);
+        return res.redirect('/'); 
     }
     
     try {
-        // 2. Load and Update Node
-        const node = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        // 3. LOAD AND SYNC NODE DATA
+        const fileContent = fs.readFileSync(filePath, 'utf8');
+        let node = JSON.parse(fileContent);
+
+        // Update ID if mismatched
+        if (node.id !== nodeId) node.id = nodeId;
+
+        // 3.5 STATIC BAKE REDIRECT
+        // If the bot marked this as static, we MUST check if the HTML file exists.
+        // If it does, we send the user to the physical site instead of rendering here.
+        if (node.isStatic) {
+            const staticHtmlPath = path.join(sitesDir, `${nodeId}.html`);
+            if (fs.existsSync(staticHtmlPath)) {
+                return res.redirect(`/sites/${nodeId}.html`);
+            } else {
+                console.error(`[!] Static mismatch: JSON exists for ${nodeId} but HTML is missing in /sites.`);
+                // Fallback: render it dynamically anyway so they don't get a 404
+            }
+        }
+
+        // Update view count
         node.views = (node.views || 0) + 1;
         fs.writeFileSync(filePath, JSON.stringify(node, null, 2));
 
-        // 3. Handle Broadcast System
+        // 4. BROADCAST SYSTEM
         let broadcast = { message: "" };
-        if (fs.existsSync('./broadcast.json')) {
+        const broadcastPath = path.join(__dirname, 'broadcast.json');
+        if (fs.existsSync(broadcastPath)) {
             try {
-                broadcast = JSON.parse(fs.readFileSync('./broadcast.json', 'utf8'));
-            } catch (e) {
-                console.error("Broadcast read error:", e);
-            }
+                broadcast = JSON.parse(fs.readFileSync(broadcastPath, 'utf8'));
+            } catch (e) {}
         }
 
-        // 4. Maintenance Status
+        // 5. MAINTENANCE STATUS
         const maintenanceStatus = typeof maintenanceMode !== 'undefined' ? maintenanceMode : false;
 
-        // 5. Sidebar: Get 5 most recent nodes (Filtered)
-        const files = fs.readdirSync('./nodes');
+        // 6. SIDEBAR: RECENT NODES
+        const files = fs.readdirSync(nodesDir);
         const recentNodes = files
             .filter(file => {
-                // ONLY include .json files, EXCLUDE the root, and ignore system files
                 return file.endsWith('.json') && 
-                    file !== 'root.json' && 
-                    file !== 'bulletin.json' && 
-                    file !== 'filters.json';
+                       !['root.json', 'bulletin.json', 'filters.json', 'phantom_nodes.json'].includes(file);
             }) 
             .map(file => {
                 try {
-                    const data = JSON.parse(fs.readFileSync(`./nodes/${file}`, 'utf8'));
-                    const stats = fs.statSync(`./nodes/${file}`);
+                    const data = JSON.parse(fs.readFileSync(path.join(nodesDir, file), 'utf8'));
+                    const stats = fs.statSync(path.join(nodesDir, file));
+                    const currentId = file.replace('.json', '');
                     
-                    // Only return if it actually has a title/id
-                    if (data.title && data.id) {
-                        return { 
-                            id: data.id, 
-                            title: data.title, 
-                            mtime: stats.mtime,
-                            isStatic: data.isStatic || false 
-                        };
-                    }
-                    return null;
-                } catch (e) {
-                    return null; // Skip corrupted files
-                }
+                    return { 
+                        id: currentId, 
+                        title: data.title || "Untitled Fragment", 
+                        mtime: stats.mtime,
+                        author: data.author || 'User',
+                        isStatic: data.isStatic || false,
+                        // Fix URL based on static status
+                        url: data.isStatic ? `/sites/${currentId}.html` : `/node/${currentId}`
+                    };
+                } catch (e) { return null; }
             })
-            .filter(node => node !== null) // Remove the nulls we created above
+            .filter(node => node !== null)
             .sort((a, b) => b.mtime - a.mtime)
             .slice(0, 5);
 
-        // 6. Bulletin Data (FIXED TO ROOT)
+        // 7. BULLETIN DATA
         let bulletin = [];
-        const rootBulletinPath = path.join(__dirname, 'bulletin.json'); 
+        const finalBulletinPath = fs.existsSync(path.join(nodesDir, 'bulletin.json')) 
+            ? path.join(nodesDir, 'bulletin.json') 
+            : path.join(__dirname, 'bulletin.json');
 
-        if (fs.existsSync(rootBulletinPath)) {
-            try {
-                bulletin = JSON.parse(fs.readFileSync(rootBulletinPath, 'utf8'));
-            } catch (e) {
-                console.error("Bulletin read error:", e);
-                bulletin = [];
-            }
+        if (fs.existsSync(finalBulletinPath)) {
+            try { bulletin = JSON.parse(fs.readFileSync(finalBulletinPath, 'utf8')); } catch (e) {}
         }
 
-        // 7. DYNAMIC CAPTCHA GENERATION
-        // Generate two numbers between 1 and 10
+        // 8. DYNAMIC CAPTCHA
         const num1 = Math.floor(Math.random() * 10) + 1;
         const num2 = Math.floor(Math.random() * 10) + 1;
-        
-        // Lock the sum into the session memory
         req.session.captchaAnswer = num1 + num2;
-        
-        // This is the string EJS will display
         const captchaQuestion = `${num1} + ${num2}`;
 
-        // 8. RENDER THE PAGE
+        // 9. RENDER
         res.render('node-template', { 
             node,
-            captchaQuestion, // This fixes your "is not defined" error!
+            captchaQuestion,
             recentNodes, 
             bulletin, 
             broadcast, 
@@ -414,7 +424,7 @@ app.get('/node/:id', (req, res) => {
         });
 
     } catch (err) {
-        console.error("Critical Sector Error:", err);
+        console.error("CRITICAL NODE RENDER ERROR:", err);
         res.status(500).send("<h1>SECTOR CORRUPTION</h1><p>The data fragment is unreadable.</p>");
     }
 });
@@ -703,18 +713,15 @@ app.get('/admin-portal', isAdmin, (req, res) => {
 
     try {
         // 1. GATHER NODE DATA
-        // Ensure the directories exist before reading to prevent crashes
         if (!fs.existsSync('./nodes')) fs.mkdirSync('./nodes');
         if (!fs.existsSync('./cemetery')) fs.mkdirSync('./cemetery');
 
         const nodeFiles = fs.readdirSync('./nodes').filter(f => f.endsWith('.json'));
         const deadFiles = fs.readdirSync('./cemetery').filter(f => f.endsWith('.json'));
 
-        // 2. GATHER BULLETIN DATA (The missing piece!)
+        // 2. GATHER BULLETIN DATA
         let bulletinData = [];
-        const bulletinPath = './nodes/bulletin.json'; // RECOMMENDED: save inside nodes for Railway persistence
-        
-        // Fallback check: if not in nodes/, check root (transition period)
+        const bulletinPath = './nodes/bulletin.json'; 
         const oldPath = './bulletin.json';
         const finalPath = fs.existsSync(bulletinPath) ? bulletinPath : oldPath;
 
@@ -749,23 +756,32 @@ app.get('/admin-portal', isAdmin, (req, res) => {
 
         // 4. RENDER THE DASHBOARD
         res.render('admin-dash', {
-            // Data lists
+            // --- UPDATED ALLNODES MAPPING ---
             allNodes: nodeFiles.map(f => {
-                const data = JSON.parse(fs.readFileSync(`./nodes/${f}`, 'utf8'));
-                return { ...data, slug: f.replace('.json', '') };
+                try {
+                    const data = JSON.parse(fs.readFileSync(`./nodes/${f}`, 'utf8'));
+                    return { 
+                        ...data, 
+                        slug: f.replace('.json', ''),
+                        // Explicitly ensuring author is passed, default to 'Unknown'
+                        author: data.author || 'User' 
+                    };
+                } catch (e) {
+                    return { id: f, title: "CORRUPT NODE", author: "SYSTEM" };
+                }
             }),
+            // --- END OF UPDATED SECTION ---
+
             deadNodes: deadFiles.map(f => {
                 const data = JSON.parse(fs.readFileSync(`./cemetery/${f}`, 'utf8'));
                 return { ...data, slug: f.replace('.json', '') };
             }),
             bulletin: bulletinData, 
             
-            // System Logs (Garbage Collector)
             gcLogs: fs.existsSync('./gc_history.log') 
                 ? fs.readFileSync('./gc_history.log', 'utf8').trim().split('\n').slice(-5).reverse() 
                 : ["No logs found. System healthy."],
             
-            // Statistics for Resource Monitor
             stats: {
                 liveCount: nodeFiles.length,
                 deadCount: deadFiles.length,
@@ -773,7 +789,6 @@ app.get('/admin-portal', isAdmin, (req, res) => {
                 ratio: ratio
             },
             
-            // System variables
             maintenanceMode: typeof maintenanceMode !== 'undefined' ? maintenanceMode : false,
             key: key 
         });
@@ -957,15 +972,28 @@ app.get('/admin/export', (req, res) => {
     archive.pipe(res);
 
     // --- DIRECTORIES ---
-    if (fs.existsSync('./nodes/')) archive.directory('nodes/', 'nodes');
-    if (fs.existsSync('./public_sites/')) archive.directory('public_sites/', 'public_sites'); // THE SECTORS
-    if (fs.existsSync('./public/')) archive.directory('public/', 'public'); // Assets (CSS/JS)
-    if (fs.existsSync('./views/')) archive.directory('views/', 'views');
+    // Added 'sites' to ensure Phantoms are backed up
+    const dirsToBackup = [
+        { real: 'nodes/', alias: 'nodes' },
+        { real: 'sites/', alias: 'sites' }, // The static baked Phantoms
+        { real: 'public/', alias: 'public' }, 
+        { real: 'views/', alias: 'views' }
+    ];
+
+    dirsToBackup.forEach(dir => {
+        const fullPath = path.join(__dirname, dir.real);
+        if (fs.existsSync(fullPath)) {
+            archive.directory(fullPath, dir.alias);
+        }
+    });
 
     // --- SYSTEM FILES ---
     const filesToInclude = ['bulletin.json', 'broadcast.json', 'phantom_nodes.json', 'server.js', 'page_bot.js'];
     filesToInclude.forEach(file => {
-        if (fs.existsSync(`./${file}`)) archive.file(file, { name: file });
+        const fullPath = path.join(__dirname, file);
+        if (fs.existsSync(fullPath)) {
+            archive.file(fullPath, { name: file });
+        }
     });
 
     archive.finalize();
@@ -981,27 +1009,31 @@ app.post('/admin/restore', upload.single('backupZip'), async (req, res) => {
 
     try {
         // 1. CLEAR EXISTING DIRECTORIES
-        const foldersToClear = ['./nodes', './public_sites', './views', './public'];
+        // Added './sites' to the wipe list
+        const foldersToClear = ['./nodes', './sites', './views', './public'];
+        
         foldersToClear.forEach(dir => {
-            if (fs.existsSync(dir)) {
-                // Use recursive delete to ensure folders are emptied properly
-                fs.rmSync(dir, { recursive: true, force: true });
-                fs.mkdirSync(dir); // Recreate the empty folder
+            const fullPath = path.resolve(__dirname, dir);
+            if (fs.existsSync(fullPath)) {
+                fs.rmSync(fullPath, { recursive: true, force: true });
+                fs.mkdirSync(fullPath); 
             }
         });
 
         // 2. EXTRACT ZIP
+        // Extraction to root ensures 'nodes/' and 'sites/' land in the right spot
         await fs.createReadStream(zipPath)
-            .pipe(unzipper.Extract({ path: './' }))
+            .pipe(unzipper.Extract({ path: path.join(__dirname, './') }))
             .promise();
 
-        fs.unlinkSync(zipPath);
+        fs.unlinkSync(zipPath); // Delete the uploaded temp zip
 
-        res.send("<h2>Full System Restored.</h2><p>Sectors, Nodes, and Phantoms updated.</p><a href='/'>Return to Root</a>");
+        res.send("<h2>Full System Restored.</h2><p>Sectors, Nodes, and Phantoms updated.</p><a href='/admin-portal'>Return to Admin</a>");
         
-        // Restart to ensure server.js changes take effect
-        setTimeout(() => process.exit(0), 1000); 
+        // Restart to apply system file changes (server.js / page_bot.js)
+        setTimeout(() => process.exit(0), 1500); 
     } catch (err) {
+        console.error("Restore Error:", err);
         res.status(500).send("Restore failed: " + err.message);
     }
 });
@@ -1028,6 +1060,34 @@ app.post('/admin/revive/:id', (req, res) => {
     }
 });
 
+app.post('/admin/trigger-architect', (req, res) => {
+    const { adminPass } = req.body;
+    if (adminPass !== process.env.ADMIN_PASS) return res.status(403).send("Unauthorized");
+
+    // We call the function from our page_bot.js
+    if (typeof generatePhantomNode === "function") {
+        generatePhantomNode();
+        res.redirect(`/admin-portal?key=${adminPass}&msg=Architect_Triggered`);
+    } else {
+        res.status(500).send("Architect Bot not loaded in current sector.");
+    }
+});
+
+app.get('/api/phantoms', (req, res) => {
+    const nodesDir = path.join(__dirname, 'nodes');
+    const files = fs.readdirSync(nodesDir);
+    
+    const phantoms = files
+        .filter(f => f.endsWith('.json'))
+        .map(f => {
+            try {
+                return JSON.parse(fs.readFileSync(path.join(nodesDir, f), 'utf8'));
+            } catch (e) { return null; }
+        })
+        .filter(n => n && n.author === "THE_ARCHITECT");
+
+    res.json(phantoms);
+});
 
 
 
@@ -1042,6 +1102,25 @@ app.listen(port, () => {
     setInterval(runGarbageCollector, 1000 * 60 * 60);
     // Run the bot every 4 hours
     setInterval(spawnNewsSector, 1000 * 60 * 60 * 4);
+
+    // 1. RUN IMMEDIATELY ON STARTUP
+    try {
+        console.log("[!] ARCHITECT: Initializing immediate materialization...");
+        generatePhantomNode(); 
+    } catch (err) {
+        console.error("[!] ARCHITECT STARTUP ERROR:", err);
+    }
+
+    // 2. SET THE RECURRING SCHEDULE (Every 4 Hours)
+    setInterval(() => {
+        try {
+            generatePhantomNode();
+        } catch (err) {
+            console.error("[!] ARCHITECT INTERVAL ERROR:", err);
+        }
+    }, 1000 * 60 * 60 * 4);
+
+    console.log("[BOT]: Architect scheduled for 4-hour intervals."); 
 
     console.log("[GC]: Garbage Collector scheduled for 1-hour intervals.");
 });
