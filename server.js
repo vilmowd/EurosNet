@@ -1029,29 +1029,7 @@ app.post('/admin/revive/:id', (req, res) => {
 });
 
 
-const rabbitHoles = [
-    { prefix: "SIGNAL LOST", suffix: "FOLLOW THE WHITE NOISE" },
-    { prefix: "VOID SECTOR", suffix: "ENTRY NOT PERMITTED" },
-    { prefix: "PROTOCOL 9", suffix: "THEY ARE WATCHING" }
-];
 
-const mysteriousLinks = [
-    "https://neocities.org/browse?sort_by=random", // Sends them to a random world
-    "/node/999", // A ghost node on your own site
-    "https://libraryofbabel.info/random.cgi" // The ultimate rabbit hole
-];
-
-function generateRabbitHole() {
-    const hole = rabbitHoles[Math.floor(Math.random() * rabbitHoles.length)];
-    const link = mysteriousLinks[Math.floor(Math.random() * mysteriousLinks.length)];
-    
-    return {
-        title: `[!] ${hole.prefix}: ${Math.random().toString(36).substring(7).toUpperCase()}`,
-        content: `DECRYPTION ERROR: ${hole.suffix}...`,
-        link: link,
-        timestamp: new Date().toISOString()
-    };
-}
 
 
 
