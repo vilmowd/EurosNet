@@ -1,4 +1,5 @@
 const https = require('https');
+require('./page_bot.js');
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -122,8 +123,24 @@ async function spawnNewsSector() {
                         <a href="${item.link}" target="_blank" style="font-size: 18px; color: blue;">[ CLICK HERE TO VIEW FULL ARTICLE ]</a>
                     </div>
                     <hr style="margin-top: 30px;">
-                    <center>
-                        <button onclick="window.location.href='/node/root'">[ Return to Node Net ]</button>
+                    <center style="margin-top: 20px;">
+                        <a href="https://eurosnet.up.railway.app" 
+                        style="
+                            display: inline-block;
+                            padding: 5px 15px;
+                            background: #c0c0c0;
+                            border: 2px outset #ffffff;
+                            color: #000000;
+                            text-decoration: none;
+                            font-family: 'Tahoma', sans-serif;
+                            font-size: 11px;
+                            font-weight: bold;
+                            cursor: pointer;
+                        "
+                        onmousedown="this.style.borderStyle='inset'"
+                        onmouseup="this.style.borderStyle='outset'">
+                        [ Return to Node Net ]
+                        </a>
                     </center>
                 </div>
             </div>
@@ -933,26 +950,24 @@ app.get('/admin/export', (req, res) => {
     const { key } = req.query;
     if (key !== process.env.ADMIN_PASS) return res.status(403).send("Unauthorized");
 
-    // Set the headers so the browser knows a file is coming
-    res.attachment(`node_net_backup_${Date.now()}.zip`);
-
+    res.attachment(`eurosnet_full_backup_${Date.now()}.zip`);
     const archive = archiver('zip', { zlib: { level: 9 } });
 
-    // Good practice: catch warnings and errors
     archive.on('error', (err) => res.status(500).send({ error: err.message }));
-
-    // Pipe the archive data to the response
     archive.pipe(res);
 
-    // Add the nodes directory
-    archive.directory('nodes/', 'nodes');
+    // --- DIRECTORIES ---
+    if (fs.existsSync('./nodes/')) archive.directory('nodes/', 'nodes');
+    if (fs.existsSync('./public_sites/')) archive.directory('public_sites/', 'public_sites'); // THE SECTORS
+    if (fs.existsSync('./public/')) archive.directory('public/', 'public'); // Assets (CSS/JS)
+    if (fs.existsSync('./views/')) archive.directory('views/', 'views');
 
-    // Add the bulletin board if it exists
-    if (fs.existsSync('./bulletin.json')) {
-        archive.file('bulletin.json', { name: 'bulletin.json' });
-    }
+    // --- SYSTEM FILES ---
+    const filesToInclude = ['bulletin.json', 'broadcast.json', 'phantom_nodes.json', 'server.js', 'page_bot.js'];
+    filesToInclude.forEach(file => {
+        if (fs.existsSync(`./${file}`)) archive.file(file, { name: file });
+    });
 
-    // Finalize the archive (this tells the stream we are done)
     archive.finalize();
 });
 
@@ -960,25 +975,32 @@ app.get('/admin/export', (req, res) => {
 app.post('/admin/restore', upload.single('backupZip'), async (req, res) => {
     const { adminPass } = req.body;
     if (adminPass !== process.env.ADMIN_PASS) return res.status(403).send("Unauthorized");
-
     if (!req.file) return res.status(400).send("No file uploaded.");
 
     const zipPath = req.file.path;
 
     try {
-        // 1. Clear current nodes and bulletin
-        // Be careful: this wipes the live data!
-        fs.readdirSync('./nodes').forEach(file => fs.unlinkSync(path.join('./nodes', file)));
-        
-        // 2. Extract the ZIP
+        // 1. CLEAR EXISTING DIRECTORIES
+        const foldersToClear = ['./nodes', './public_sites', './views', './public'];
+        foldersToClear.forEach(dir => {
+            if (fs.existsSync(dir)) {
+                // Use recursive delete to ensure folders are emptied properly
+                fs.rmSync(dir, { recursive: true, force: true });
+                fs.mkdirSync(dir); // Recreate the empty folder
+            }
+        });
+
+        // 2. EXTRACT ZIP
         await fs.createReadStream(zipPath)
             .pipe(unzipper.Extract({ path: './' }))
             .promise();
 
-        // 3. Clean up the temp upload file
         fs.unlinkSync(zipPath);
 
-        res.send("<h2>System Restored Successfully.</h2><a href='/admin-portal?key=" + adminPass + "'>Return to Dashboard</a>");
+        res.send("<h2>Full System Restored.</h2><p>Sectors, Nodes, and Phantoms updated.</p><a href='/'>Return to Root</a>");
+        
+        // Restart to ensure server.js changes take effect
+        setTimeout(() => process.exit(0), 1000); 
     } catch (err) {
         res.status(500).send("Restore failed: " + err.message);
     }
@@ -1005,6 +1027,31 @@ app.post('/admin/revive/:id', (req, res) => {
         res.status(400).send(result.message);
     }
 });
+
+
+const rabbitHoles = [
+    { prefix: "SIGNAL LOST", suffix: "FOLLOW THE WHITE NOISE" },
+    { prefix: "VOID SECTOR", suffix: "ENTRY NOT PERMITTED" },
+    { prefix: "PROTOCOL 9", suffix: "THEY ARE WATCHING" }
+];
+
+const mysteriousLinks = [
+    "https://neocities.org/browse?sort_by=random", // Sends them to a random world
+    "/node/999", // A ghost node on your own site
+    "https://libraryofbabel.info/random.cgi" // The ultimate rabbit hole
+];
+
+function generateRabbitHole() {
+    const hole = rabbitHoles[Math.floor(Math.random() * rabbitHoles.length)];
+    const link = mysteriousLinks[Math.floor(Math.random() * mysteriousLinks.length)];
+    
+    return {
+        title: `[!] ${hole.prefix}: ${Math.random().toString(36).substring(7).toUpperCase()}`,
+        content: `DECRYPTION ERROR: ${hole.suffix}...`,
+        link: link,
+        timestamp: new Date().toISOString()
+    };
+}
 
 
 

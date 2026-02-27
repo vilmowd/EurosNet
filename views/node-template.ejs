@@ -80,6 +80,8 @@
                     </ul>
                 </td>
 
+                <br>
+
                 <fieldset style="border: 2px ridge #c0c0c0; padding: 5px; margin-top: 10px; background: #c0c0c0; width: 100%; box-sizing: border-box; font-family: 'Tahoma', sans-serif;">
                     <legend style="font-weight: bold; background: #000080; color: white; padding: 0 5px; font-size: 10px;">WEB-AMP v2.0</legend>
                     
@@ -105,6 +107,25 @@
 
                     <audio id="radio-audio" crossorigin="anonymous"></audio>
                 </fieldset>
+                <br>
+
+                <fieldset style="border: 2px solid #550000; background: #000; color: #ff0000; padding: 10px; font-family: 'Courier New', monospace;">
+                    <legend style="background: #ff0000; color: #000; font-weight: bold; font-size: 10px; padding: 0 5px;">RABBIT HOLE GENERATOR</legend>
+                    
+                    <div id="rabbit-hole-content">
+                        <div style="font-size: 10px; margin-bottom: 5px;">[SATELLITE INTERCEPT ACTIVE]</div>
+                        <div id="hole-text" style="min-height: 20px;">
+                            <a href="#" style="color: #ff0000; text-decoration: none; font-size: 12px; font-weight: bold; border-bottom: 1px dashed #ff0000;">
+                                >> INITIALIZING DEEP SCAN...
+                            </a>
+                        </div>
+                    </div>
+
+                    <button id="btn-dive" style="margin-top: 10px; background: #220000; color: #ff0000; border: 1px solid #ff0000; cursor: pointer; font-size: 9px; width: 100%;">
+                        GENERATE NEW COORDINATES
+                    </button>
+                </fieldset>
+                <br>
 
                <fieldset style="border: 2px ridge #c0c0c0; padding: 5px; margin-top: 20px; width: 100%; box-sizing: border-box; margin-left: 0; margin-right: 0;">
                     <legend style="font-weight: bold; background: #c0c0c0; padding: 0 5px;">NEOCITIES GATEWAY</legend>
@@ -112,6 +133,7 @@
                         Loading neighbors...
                     </div>
                </fieldset>
+               <br>
 
                 <td>
                     <div class="main-content-container" style="min-height: 150px; background: #fff; padding: 15px; border: 1px inset #ffffff; color: #000; overflow: auto;">
@@ -216,6 +238,13 @@
             </div>
             <p><small>VISITOR COUNT</small></p>
         </center>
+        <br>
+        <fieldset style="border: 2px ridge #00ff00; background: #000; color: #00ff00; padding: 10px; margin-top: 10px;">
+            <legend style="background: #00ff00; color: #000; font-weight: bold; font-size: 10px; padding: 0 5px;">THE ARCHITECT (Live Feed)</legend>
+            <div id="phantom-list" style="font-size: 10px; font-family: 'Courier New';">
+                Scanning for new nodes...
+            </div>
+        </fieldset>
 
         <h3 style="margin-bottom: 5px; font-size: 10pt;">📂 Sub-Branches (Static & Virtual):</h3>
         <div style="background: #ffffff; border: 2px inset #ffffff; padding: 10px; margin-bottom: 25px; min-height: 50px; max-height: 150px; overflow-y: auto;">
@@ -352,7 +381,7 @@
     display: none;">
 
 <style>
-    /* Hide the real boring system cursor */
+    
     html, body, a, button {
         cursor: none !important;
     }
@@ -364,8 +393,7 @@
     window.addEventListener('mousemove', (e) => {
         ghost.style.display = 'block';
         
-        // We remove the "- 16". 
-        // Now the top-left (0,0) of the GIF is exactly at the mouse tip.
+        
         ghost.style.left = e.clientX + 'px';
         ghost.style.top = e.clientY + 'px';
     });
@@ -380,7 +408,7 @@
 <script>
     async function updateBTC() {
         try {
-            // Now fetching from your OWN server!
+            
             const response = await fetch('/api/btc');
             const data = await response.json();
             
@@ -390,7 +418,7 @@
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
                 });
-                // If it's 0, show $0.00 so you know the script is working but the API is blocked
+                
                 document.getElementById('btc-price').innerText = '$' + price;
             }
         } catch (e) {
@@ -492,8 +520,30 @@
 
 loadNeocities();
 
+document.addEventListener('DOMContentLoaded', () => {
+    const holeLink = document.getElementById('hole-link');
+    const glitchBtn = document.getElementById('glitch-btn');
 
-// --- RADIO PLAYER LOGIC (STABLE VERSION) ---
+    async function fetchNewHole() {
+        holeLink.innerHTML = "SEARCHING THE VOID...";
+        
+        setTimeout(() => {
+            const data = generateRabbitHole(); 
+            holeLink.innerText = data.title;
+            holeLink.href = data.link;
+            
+            
+            holeLink.style.animation = "none";
+            void holeLink.offsetWidth; 
+            holeLink.style.animation = "glitch 0.2s 3";
+        }, 800);
+    }
+
+    if(glitchBtn) glitchBtn.addEventListener('click', fetchNewHole);
+});
+
+
+
 document.addEventListener('DOMContentLoaded', () => {
     const audioPlayer = document.getElementById('radio-audio');
     const statusText = document.getElementById('radio-status');
@@ -504,7 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const streamUrl = "https://ice1.somafm.com/indiepop-128-mp3";
 
-    // Only proceed if all elements exist
+    
     if (btnPlay && btnStop && audioPlayer) {
         
         btnPlay.addEventListener('click', () => {
@@ -538,5 +588,57 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Radio Error: One or more UI elements not found.");
     }
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+    const holeText = document.getElementById('hole-text');
+    const btnDive = document.getElementById('btn-dive');
+
+    const mysteries = [
+        { t: "SECTOR-7 ERROR", l: "https://neocities.org/browse?sort_by=random" },
+        { t: "CIPHER: " + Math.random().toString(36).substring(7).toUpperCase(), l: "https://libraryofbabel.info/random.cgi" },
+        { t: "ARCHIVE_ENTRY_99", l: "https://www.google.com/search?q=cicada+3301+archive" },
+        { t: "GHOST_NODE.exe", l: "https://anvaka.github.io/say-it-with-data/" },
+        { t: "VOID_COORDINATES", l: "https://whiteenamel.com/" }
+    ];
+
+    
+    function generateRabbitHole() {
+        if (!holeText) return;
+        
+        holeText.style.color = "#fff";
+        holeText.innerHTML = "DECRYPTING...";
+
+        setTimeout(() => {
+            const item = mysteries[Math.floor(Math.random() * mysteries.length)];
+            holeText.style.color = "#ff0000";
+            holeText.innerHTML = `
+                <a href="${item.l}" target="_blank" style="color: #ff0000; text-decoration: none; font-weight: bold;">
+                    [!] ${item.t}<br>
+                    <span style="font-size:8px; color: #880000;">>> CLICK TO ENTER VOID</span>
+                </a>
+            `;
+        }, 600);
+    }
+
+    
+    if (btnDive) {
+        btnDive.addEventListener('click', generateRabbitHole);
+    }
+});
+
+async function loadPhantoms() {
+    try {
+        const res = await fetch('/api/phantoms'); 
+        const nodes = await res.json();
+        let html = "";
+        nodes.forEach(n => {
+            html += `<div>> <a href="${n.url}" style="color:#00ff00; text-decoration:none;">${n.title}</a></div>`;
+        });
+        document.getElementById('phantom-list').innerHTML = html;
+    } catch (e) {
+        document.getElementById('phantom-list').innerHTML = "NO NODES DETECTED";
+    }
+}
+loadPhantoms();
 </script>
 </html>

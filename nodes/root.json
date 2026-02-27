@@ -27,7 +27,17 @@
       "id": "93f4638f",
       "title": "Bradly and suck <3",
       "isStatic": true
+    },
+    {
+      "id": "news-41697253",
+      "title": "[NEWS] AirSnitch: Demystifying and breaking client isolation in Wi-Fi networks [pdf]",
+      "isStatic": true
+    },
+    {
+      "id": "news-53746174",
+      "title": "[NEWS] Statement from Dario Amodei on Our Discussions with the Department of War",
+      "isStatic": true
     }
   ],
-  "views": 286
+  "views": 298
 }
