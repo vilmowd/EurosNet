@@ -2,6 +2,12 @@
   "id": "root",
   "title": "THE SOURCE",
   "content": "Welcome to the beginning of the net. All nodes stem from here.",
-  "children": [],
-  "views": 413
+  "children": [
+    {
+      "id": "104a0b40",
+      "title": "CYBER-PUNK WEB RING",
+      "isStatic": true
+    }
+  ],
+  "views": 416
 }

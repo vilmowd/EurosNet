@@ -205,26 +205,41 @@ app.use(
       useDefaults: true, 
       directives: {
         "default-src": ["'self'"],
-        // Added 'unsafe-eval' in case any of your mystery scripts or 90s widgets need it
+        
+        // --- SCRIPTS ---
+        // 'unsafe-inline' allows <script> tags
+        // 'unsafe-eval' allows certain legacy 90s widgets/scripts
         "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://www.googletagmanager.com"],
+        
+        // --- ATTRIBUTES (THE FIX) ---
+        // This specific line allows your onclick="window.location..." handlers to work
+        "script-src-attr": ["'unsafe-inline'"], 
+
+        // --- STYLES ---
         "style-src": ["'self'", "'unsafe-inline'"],
+
+        // --- MEDIA & ASSETS ---
+        // "*" allows images from any source (vital for hotlinked 90s GIFs)
         "img-src": ["*", "data:", "blob:", "https://images.weserv.nl"],
         "media-src": ["*", "data:", "blob:"],
         "frame-src": ["*"],
+
+        // --- DATA CONNECTIONS ---
         "connect-src": [
           "'self'", 
           "https://corsproxy.io", 
           "https://*.google-analytics.com", 
           "https://*.analytics.google.com", 
           "https://*.googletagmanager.com",
-          "https://news.ycombinator.com", // Allow the Archivist to fetch news
-          "*" // WARNING: This is broad, but useful for the 'Rabbit Hole' mysteries to function
+          "https://news.ycombinator.com",
+          "*" // Broad permission for your "Rabbit Hole" mysteries
         ],
-        // Set this to null if you are running on localhost without SSL (HTTP)
+
+        // Set to null for local development or non-SSL environments
         "upgrade-insecure-requests": null,
       },
     },
-    // Required to allow cross-origin images (like the Geocities GIFs) to load correctly
+    // Allows images from other domains (Geocities/Giphy) to load without strict COEP checks
     crossOriginEmbedderPolicy: false,
   })
 );
@@ -505,7 +520,7 @@ app.post('/spawn/:parentId', spawnLimiter, (req, res) => {
         </html>`;
 
         // 4. SAVE THE PHYSICAL HTML FILE
-        const filePath = path.join(__dirname, 'public_sites', `${nodeId}.html`);
+        const filePath = path.join(__dirname, 'sites', `${nodeId}.html`);
         fs.writeFileSync(filePath, fullHtmlPage);
 
         // 4.5 CREATE THE NODE METADATA
