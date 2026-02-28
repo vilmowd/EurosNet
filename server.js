@@ -89,7 +89,7 @@ async function spawnNewsSector() {
 
         // 1. Generate unique ID based on title
         const nodeId = "news-" + Buffer.from(item.title).toString('hex').substring(0, 8);
-        const htmlFilePath = path.join(__dirname, 'sites', `${nodeId}.html`);
+        const htmlFilePath = path.join(__dirname, 'public_sites', `${nodeId}.html`);
         const jsonNodePath = path.join(__dirname, 'nodes', `${nodeId}.json`);
 
         // Skip if already exists
@@ -464,16 +464,16 @@ app.post('/spawn/:parentId', spawnLimiter, (req, res) => {
     try {
         const { title, htmlContent, captchaInput } = req.body;
         
-        
+        // 1. Humanity Check
         if (parseInt(captchaInput) !== req.session.captchaAnswer) {
             return res.status(403).send("Captcha failed.");
         }
 
-       
+        // 2. Generate the ID & Sanitize
         const nodeId = uuidv4().substring(0, 8);
         const safeHtml = sanitizeContent(htmlContent); 
 
-        
+        // 3. THE BAKE (Updated for high-compatibility)
         const fullHtmlPage = `
         <!DOCTYPE html>
         <html lang="en">
@@ -504,11 +504,11 @@ app.post('/spawn/:parentId', spawnLimiter, (req, res) => {
         </body>
         </html>`;
 
-        
-        const filePath = path.join(__dirname, 'sites', `${nodeId}.html`);
+        // 4. SAVE THE PHYSICAL HTML FILE
+        const filePath = path.join(__dirname, 'public_sites', `${nodeId}.html`);
         fs.writeFileSync(filePath, fullHtmlPage);
 
-        
+        // 4.5 CREATE THE NODE METADATA
         const newNodeData = {
             id: nodeId,
             title: title,
@@ -521,7 +521,7 @@ app.post('/spawn/:parentId', spawnLimiter, (req, res) => {
         const nodePath = path.join(__dirname, 'nodes', `${nodeId}.json`);
         fs.writeFileSync(nodePath, JSON.stringify(newNodeData, null, 2));
 
-        
+        // 5. UPDATE THE PARENT'S TREE
         const parentPath = path.join(__dirname, 'nodes', `${req.params.parentId}.json`);
         if (fs.existsSync(parentPath)) {
             const parentData = JSON.parse(fs.readFileSync(parentPath, 'utf8'));
@@ -529,7 +529,7 @@ app.post('/spawn/:parentId', spawnLimiter, (req, res) => {
             fs.writeFileSync(parentPath, JSON.stringify(parentData, null, 2));
         }
 
-        
+        // --- SECTION 5.5: AUTOMATED GRAFFITI ANNOUNCEMENT (FIXED TO ROOT) ---
         const bulletinPath = path.join(__dirname, 'bulletin.json'); 
         let bulletin = [];
 
@@ -549,19 +549,19 @@ app.post('/spawn/:parentId', spawnLimiter, (req, res) => {
             date: new Date().toLocaleString()
         };
 
-        
+        // Add to the START of the array
         bulletin.unshift(systemMessage); 
         
-        
+        // Keep only the most recent 50 messages
         if (bulletin.length > 50) {
             bulletin = bulletin.slice(0, 50);
         }
         
-        
+        // Write back to root
         fs.writeFileSync(bulletinPath, JSON.stringify(bulletin, null, 2));
-        
+        // ----------------------------------------------------
 
-       
+        // 6. REDIRECT
         res.redirect(`/sites/${nodeId}.html`);
 
     } catch (error) {
@@ -1160,7 +1160,7 @@ function injectSystemNoise() {
 let activeEntities = [];
 
 function updateGhostTraffic() {
-    
+    // Randomly add or remove "Ghosts"
     if (activeEntities.length < 15) {
         activeEntities.push({
             id: Math.random().toString(36).substring(7),
