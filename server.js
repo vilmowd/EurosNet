@@ -1216,17 +1216,10 @@ app.listen(port, () => {
     // --- START THE JANITOR ---
     // This starts the timer as soon as the server is live.
     // 1000ms * 60s * 60m = 1 Hour
-    setInterval(runGarbageCollector, 1000 * 60 * 60);
+    setInterval(runGarbageCollector, 1000 * 60 * 60 * 24 * 4);
     // Run the bot every 4 hours
-    setInterval(spawnNewsSector, 1000 * 60 * 60 * 4);
+    setInterval(spawnNewsSector, 1000 * 60 * 60 * 24 * 4);
 
-    // 1. RUN IMMEDIATELY ON STARTUP
-    try {
-        console.log("[!] ARCHITECT: Initializing immediate materialization...");
-        generatePhantomNode(); 
-    } catch (err) {
-        console.error("[!] ARCHITECT STARTUP ERROR:", err);
-    }
 
     // 2. SET THE RECURRING SCHEDULE (Every 4 Hours)
     setInterval(() => {
@@ -1235,13 +1228,13 @@ app.listen(port, () => {
         } catch (err) {
             console.error("[!] ARCHITECT INTERVAL ERROR:", err);
         }
-    }, 1000 * 60 * 60 * 4);
+    }, 1000 * 60 * 60 * 24 * 4);
 
     console.log("[BOT]: Architect scheduled for 4-hour intervals."); 
 
     console.log("[GC]: Garbage Collector scheduled for 1-hour intervals.");
 
-    setInterval(injectSystemNoise, 1000 * 60 * 60 * 4);
+    setInterval(injectSystemNoise, 1000 * 60 * 60 * 24 * 4);
 
-    setInterval(updateGhostTraffic, 10000);
+    setInterval(updateGhostTraffic, 1000 * 60 * 60 * 24 * 4);
 });
