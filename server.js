@@ -1201,6 +1201,10 @@ async function refreshSidebar() {
     }
 }
 
+
+
+//crash fix
+
 setInterval(refreshSidebar, 100000);
 
 app.get('/api/system-status', (req, res) => {
